@@ -1,0 +1,54 @@
+= jandex-gradle-plugin
+:linkattrs:
+:project-name: jandex-gradle-plugin
+:plugin-version: 0.1.0
+
+image:http://img.shields.io/travis/aalmiray/{project-name}/master.svg["Build Status", link="https://travis-ci.org/aalmiray/{project-name}"]
+image:http://img.shields.io/badge/license-ASF2-blue.svg["Apache License 2", link="http://www.apache.org/licenses/LICENSE-2.0.txt"]
+image:https://api.bintray.com/packages/aalmiray/kordamp/{project-name}/images/download.svg[link="https://bintray.com/aalmiray/kordamp/{project-name}/_latestVersion"]
+image:https://img.shields.io/badge/donations-Patreon-orange.svg[link="https://www.patreon.com/user?u=6609318"]
+
+---
+
+Runs `link:https://github.com/wildfly/jandex[jandex]` on a Gradle project.
+
+== Usage
+
+Option #1
+[source,groovy]
+[subs="attributes"]
+----
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'org.kordamp.gradle:{project-name}:{plugin-version}'
+    }
+}
+apply plugin: 'org.kordamp.gradle.jandex'
+----
+
+Option #2
+[source,groovy]
+[subs="attributes"]
+----
+plugins {
+    id 'org.kordamp.gradle.jandex' version '{plugin-version}'
+}
+----
+
+This will add a `jandex` task to your build, which will analyze the `main` sourceSets by default.
+
+== Configuration
+=== Plugin configuration
+
+The following properties can be specified in the `jandex` task configuration
+
+|===
+| Name                  | Type     | Default Value
+| processDefaultFileSet | boolean  | true
+| indexName             | String   | jandex.idx
+| fileSets              | FileTree | sourceSets.main.output
+|===
+
