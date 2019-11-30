@@ -41,7 +41,7 @@ config {
     plugin {
         enabled             = true
         id                  = 'org.kordamp.gradle.jandex'
-        implementationClass = 'org.kordamp.gradle.wildfly.JandexPlugin'
+        implementationClass = 'org.kordamp.gradle.plugin.jandex.JandexPlugin'
     }
 
     bintray {
@@ -52,6 +52,16 @@ config {
 dependencies {
     compileOnly gradleApi()
     api "org.jboss:jandex:$jandexVersion"
+}
+
+processResources {
+    filesMatching(['**/*.properties']) {
+        expand(
+            'version': project.version,
+            'id': 'jandex',
+            'name': 'Jandex Gradle plugin'
+        )
+    }
 }
 
 task publishRelease(dependsOn: [bintrayUpload, publishPlugins]) {}

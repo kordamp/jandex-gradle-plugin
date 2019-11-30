@@ -15,34 +15,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kordamp.gradle.wildfly
+package org.kordamp.gradle.plugin.jandex
 
 import groovy.transform.CompileStatic
 import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.plugins.AppliedPlugin
+import org.gradle.api.Task
 import org.gradle.api.plugins.BasePlugin
+import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.tasks.TaskProvider
+import org.kordamp.gradle.plugin.jandex.tasks.JandexTask
 
 /**
  * @author Andres Almiray
  */
 @CompileStatic
 class JandexPlugin implements Plugin<Project> {
-
     void apply(Project project) {
-        project.pluginManager.withPlugin('java-base', new Action<AppliedPlugin>() {
+        Banner.display(project)
+
+        project.plugins.apply(JavaPlugin)
+
+        TaskProvider<JandexTask> jandex = project.tasks.register('jandex', JandexTask,
+            new Action<JandexTask>() {
+                @Override
+                void execute(JandexTask t) {
+                    t.dependsOn(project.tasks.named('classes'))
+                    t.group = BasePlugin.BUILD_GROUP
+                    t.description = 'Generate a jandex index'
+                }
+            })
+
+        project.tasks.named('classes').configure(new Action<Task>() {
             @Override
-            void execute(AppliedPlugin appliedPlugin) {
-                project.tasks.register('jandex', JandexTask,
-                        new Action<JandexTask>() {
-                            @Override
-                            void execute(JandexTask t) {
-                                t.dependsOn('classes')
-                                t.group = BasePlugin.BUILD_GROUP
-                                t.description = 'Generate a jandex index'
-                            }
-                        })
+            void execute(Task t) {
+                t.finalizedBy(jandex)
             }
         })
     }
