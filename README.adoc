@@ -45,6 +45,7 @@ This will add a `jandex` task to your build, which will analyze the `main` sourc
 
 The following properties can be specified in the `jandex` task configuration
 
+[options="header"]
 |===
 | Name                  | Type     | Default Value
 | processDefaultFileSet | boolean  | true
