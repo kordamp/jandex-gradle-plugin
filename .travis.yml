@@ -17,5 +17,5 @@ jdk:
     - openjdk8
 
 before_install:
-    - openssl aes-256-cbc -md md5 -K $encrypted_b58744325de9_key -iv $encrypted_b58744325de9_iv -in .oci/config.enc -out .oci/config -d
-    - openssl aes-256-cbc -md md5 -K $encrypted_b58744325de9_key -iv $encrypted_b58744325de9_iv -in .oci/oci_api_key.pem.enc -out .oci/oci_api_key.pem -d
+    - openssl aes-256-cbc -md md5 -K $encrypted_b58744325de9_key -iv $encrypted_b58744325de9_iv -in .travis-secrets.enc -out .travis-secrets.tar -d
+    - tar xvf .travis-secrets.tar
