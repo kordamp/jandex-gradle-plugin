@@ -34,7 +34,7 @@ buildscript {
         gradlePluginPortal()
     }
     dependencies {
-        classpath 'org.kordamp.gradle:oci-gradle-build-cache-plugin:0.2.0'
+        classpath 'org.kordamp.gradle:oci-gradle-build-cache-plugin:0.3.0'
     }
 }
 
@@ -47,7 +47,7 @@ buildCache {
         enabled = !isCiServer
     }
     remote(org.kordamp.gradle.plugin.buildcache.OCIBuildCache) {
-	    configFile    = '.oci/config'
+        configFile    = '.oci/config'
         compartmentId = System.getenv()['compartmentId'] ?: '**bogus**'
         push          = isCiServer
     }
