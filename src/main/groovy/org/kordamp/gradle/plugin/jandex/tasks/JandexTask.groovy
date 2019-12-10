@@ -111,6 +111,7 @@ class JandexTask extends DefaultTask {
             IndexWriter writer = new IndexWriter(out)
             Index index = indexer.complete()
             writer.write(index)
+            println("Index has been written to ${idx.absolutePath}")
         } catch (IOException e) {
             throw new IllegalStateException(e.message, e)
         } finally {
