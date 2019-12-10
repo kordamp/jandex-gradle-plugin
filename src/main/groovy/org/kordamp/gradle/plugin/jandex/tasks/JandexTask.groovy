@@ -17,13 +17,17 @@
  */
 package org.kordamp.gradle.plugin.jandex.tasks
 
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.gradle.api.DefaultTask
+import org.gradle.api.Project
+import org.gradle.api.Transformer
 import org.gradle.api.file.ConfigurableFileTree
 import org.gradle.api.file.FileTree
 import org.gradle.api.file.FileVisitDetails
 import org.gradle.api.file.FileVisitor
 import org.gradle.api.file.RegularFile
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
@@ -40,35 +44,31 @@ import org.jboss.jandex.Indexer
  */
 @CompileStatic
 class JandexTask extends DefaultTask {
-    private final Property<Boolean> processDefaultFileSet = project.objects.property(Boolean)
-    private final Property<String> indexName = project.objects.property(String)
-    private final Property<RegularFile> destination = project.objects.fileProperty()
+    @Input
+    final Property<Boolean> processDefaultFileSet = project.objects.property(Boolean)
+    @Input
+    final Property<String> indexName = project.objects.property(String).convention('jandex.idx')
+    @OutputFile
+    final RegularFileProperty destination = project.objects.fileProperty()
     private ConfigurableFileTree fileSets
 
     JandexTask() {
         this.processDefaultFileSet.set(true)
-    }
-
-    @Input
-    boolean isProcessDefaultFileSet() {
-        this.processDefaultFileSet.get()
-    }
-
-    @Input
-    String getIndexName() {
-        this.@indexName.getOrElse('jandex.idx')
-    }
-
-    void setIndexName(String indexName) {
-        this.@indexName.set(indexName)
+        destination.convention(indexName.map(new Transformer<RegularFile, String>() {
+            @Override
+            RegularFile transform(String s) {
+                project.layout.buildDirectory.file('jandex/META-INF/' + s).get()
+            }
+        }))
     }
 
     @InputFiles
+    @CompileDynamic
     FileTree getFileSets() {
         FileTree files = null
-        if (isProcessDefaultFileSet()) {
+        if (processDefaultFileSet.get()) {
             SourceSetContainer sourceSets = (SourceSetContainer) project.extensions.findByType(SourceSetContainer)
-            List<ConfigurableFileTree> fileTrees = sourceSets.findByName('main').output.files.collect({ File dir ->
+            List<FileTree> fileTrees = sourceSets.findByName('main').output.files.collect({ File dir ->
                 project.fileTree(dir: dir, include: '**/*.class')
             })
             files = fileTrees[1..-1].inject(fileTrees[0]) { a, b -> a + b }
@@ -83,19 +83,14 @@ class JandexTask extends DefaultTask {
         this.@fileSets = project.fileTree(fileSets)
     }
 
-    @OutputFile
-    RegularFile getDestinationFile() {
-        this.@destination.getOrElse(project.layout.projectDirectory.file("${project.buildDir}/jandex/META-INF/${getIndexName()}"))
-    }
-
-    void setDestinationFile(File f) {
-        this.@destination.set(project.layout.projectDirectory.file(f.absolutePath))
-    }
-
     @TaskAction
     void generateIndex() {
+        createIndex(project, getFileSets(), destination.get())
+    }
+
+    static final createIndex(Project project, FileTree fileSets, RegularFile destination) {
         Indexer indexer = new Indexer()
-        getFileSets().visit(new FileVisitor() {
+        fileSets.visit(new FileVisitor() {
             @Override
             void visitDir(FileVisitDetails dir) {
                 // ignore
@@ -103,11 +98,11 @@ class JandexTask extends DefaultTask {
 
             @Override
             void visitFile(FileVisitDetails file) {
-                indexFile(indexer, file.file)
+                indexFile(project, indexer, file.file)
             }
         })
 
-        File idx = getDestinationFile().asFile
+        File idx = destination.asFile
         idx.parentFile.mkdirs()
 
         FileOutputStream out = null
@@ -123,7 +118,7 @@ class JandexTask extends DefaultTask {
         }
     }
 
-    private void indexFile(Indexer indexer, File file) {
+    private static void indexFile(Project project, Indexer indexer, File file) {
         if (file.name.endsWith('.class')) {
             FileInputStream fis = null
             try {
