@@ -8,3 +8,5 @@ out/
 target/
 .classpath
 .project
+.oci/config
+.oci/oci_api_key.pem

@@ -58,8 +58,8 @@ processResources {
     filesMatching(['**/*.properties']) {
         expand(
             'version': project.version,
-            'id': 'jandex',
-            'name': 'Jandex Gradle plugin'
+            'id'     : 'jandex',
+            'name'   : 'Jandex Gradle plugin'
         )
     }
 }
