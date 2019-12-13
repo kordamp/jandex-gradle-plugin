@@ -17,6 +17,7 @@
  */
 package org.kordamp.gradle.plugin.jandex
 
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.gradle.api.Action
 import org.gradle.api.Plugin
@@ -51,6 +52,16 @@ class JandexPlugin implements Plugin<Project> {
             @Override
             void execute(Task t) {
                 t.finalizedBy(jandex)
+            }
+        })
+
+        project.tasks.named('jar').configure(new Action<Task>() {
+            @Override
+            @CompileDynamic
+            void execute(Task t) {
+                t.from(jandex.get().destination) {
+                    into '/META-INF'
+                }
             }
         })
     }

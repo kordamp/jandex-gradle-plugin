@@ -20,12 +20,9 @@ package org.kordamp.gradle.plugin.jandex.tasks
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.gradle.api.DefaultTask
-import org.gradle.api.Project
 import org.gradle.api.Transformer
 import org.gradle.api.file.ConfigurableFileTree
 import org.gradle.api.file.FileTree
-import org.gradle.api.file.FileVisitDetails
-import org.gradle.api.file.FileVisitor
 import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
@@ -34,10 +31,6 @@ import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.TaskAction
-import org.jboss.jandex.ClassInfo
-import org.jboss.jandex.Index
-import org.jboss.jandex.IndexWriter
-import org.jboss.jandex.Indexer
 
 /**
  * @author Andres Almiray
@@ -57,7 +50,7 @@ class JandexTask extends DefaultTask {
         destination.convention(indexName.map(new Transformer<RegularFile, String>() {
             @Override
             RegularFile transform(String s) {
-                project.layout.buildDirectory.file('jandex/META-INF/' + s).get()
+                project.layout.buildDirectory.file('jandex/' + s).get()
             }
         }))
     }
@@ -85,55 +78,6 @@ class JandexTask extends DefaultTask {
 
     @TaskAction
     void generateIndex() {
-        createIndex(project, getFileSets(), destination.get())
-    }
-
-    static final createIndex(Project project, FileTree fileSets, RegularFile destination) {
-        Indexer indexer = new Indexer()
-        fileSets.visit(new FileVisitor() {
-            @Override
-            void visitDir(FileVisitDetails dir) {
-                // ignore
-            }
-
-            @Override
-            void visitFile(FileVisitDetails file) {
-                indexFile(project, indexer, file.file)
-            }
-        })
-
-        File idx = destination.asFile
-        idx.parentFile.mkdirs()
-
-        FileOutputStream out = null
-        try {
-            out = new FileOutputStream(idx)
-            IndexWriter writer = new IndexWriter(out)
-            Index index = indexer.complete()
-            writer.write(index)
-            println("Index has been written to ${idx.absolutePath}")
-        } catch (IOException e) {
-            throw new IllegalStateException(e.message, e)
-        } finally {
-            out?.close()
-        }
-    }
-
-    private static void indexFile(Project project, Indexer indexer, File file) {
-        if (file.name.endsWith('.class')) {
-            FileInputStream fis = null
-            try {
-                fis = new FileInputStream(file)
-
-                ClassInfo info = indexer.index(fis)
-                if (info != null) {
-                    project.logger.info("Indexed ${info.name()} (${info.annotations().size()} annotations)")
-                }
-            } catch (final Exception e) {
-                throw new IllegalStateException(e.message, e)
-            } finally {
-                fis?.close()
-            }
-        }
+        JandexHelper.createIndex(project, getFileSets(), destination.get().asFile)
     }
 }
