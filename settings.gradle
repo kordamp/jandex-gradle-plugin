@@ -48,7 +48,7 @@ buildCache {
     }
     remote(org.kordamp.gradle.plugin.buildcache.OCIBuildCache) {
         configFile    = '.oci/config'
-        compartmentId = System.getenv()['compartmentId'] ?: '**bogus**'
+        compartmentId = System.getenv()['COMPARTMENT_ID'] ?: '**bogus**'
         push          = isCiServer
     }
 }
