@@ -22,10 +22,9 @@ pluginManagement {
         mavenLocal()
     }
     plugins {
-        id 'org.kordamp.gradle.kordamp-parentpom' version kordampPomVersion
-        id 'org.kordamp.gradle.groovy-project'    version kordampPluginVersion
-        id 'org.kordamp.gradle.bintray'           version kordampPluginVersion
-        id 'org.kordamp.gradle.plugin'            version kordampPluginVersion
+        id 'org.kordamp.gradle.groovy-project' version kordampPluginVersion
+        id 'org.kordamp.gradle.bintray'        version kordampPluginVersion
+        id 'org.kordamp.gradle.plugin'         version kordampPluginVersion
     }
 }
 
@@ -33,12 +32,15 @@ buildscript {
     repositories {
         jcenter()
         gradlePluginPortal()
+        mavenLocal()
     }
     dependencies {
-        classpath 'org.kordamp.gradle:oci-gradle-build-cache-plugin:0.3.0'
+        classpath "org.kordamp.gradle:oci-gradle-build-cache-plugin:$ociBuildCacheVersion"
+        classpath "org.kordamp.gradle:kordamp-parentbuild:$kordampBuildVersion"
     }
 }
 
+apply plugin: 'org.kordamp.gradle.kordamp-parentbuild'
 apply plugin: 'org.kordamp.gradle.oci-build-cache'
 
 ext.isCiServer = System.getenv().containsKey('CI')
