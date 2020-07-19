@@ -25,6 +25,7 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.TaskProvider
 import org.kordamp.gradle.plugin.jandex.tasks.JandexTask
 
@@ -55,13 +56,11 @@ class JandexPlugin implements Plugin<Project> {
             }
         })
 
-        project.tasks.named('jar').configure(new Action<Task>() {
+        project.tasks.named('processResources', Copy).configure(new Action<Copy>() {
             @Override
             @CompileDynamic
-            void execute(Task t) {
-                t.from(jandex.get().destination) {
-                    into '/META-INF'
-                }
+            void execute(Copy t) {
+                jandex.get().destination.set(project.file("${t.destinationDir}/META-INF/jandex.idx"))
             }
         })
     }

@@ -4,7 +4,7 @@
 :project-repo:    maven
 :project-name:    jandex-gradle-plugin
 :project-group:   org.kordamp.gradle
-:project-version: 0.5.0
+:project-version: 0.6.0
 
 image:http://img.shields.io/travis/{project-owner}/{project-name}/master.svg["Build Status (travis)", link="https://travis-ci.org/{project-owner}/{project-name}"]
 image:https://github.com/{project-owner}/{project-name}/workflows/Build/badge.svg["Build Status", link="https://github.com/{project-owner}/{project-name}/actions"]
@@ -43,7 +43,8 @@ plugins {
 }
 ----
 
-This will add a `jandex` task to your build, which will analyze the `main` sourceSets by default.
+This will add a `jandex` task to your build, which will analyze the `main` sourceSets by default, the generated index
+will be placed in `${project.tasks.processResources.destinationDir}/META-INF/jandex.idx`.
 
 == Configuration
 === Plugin configuration
@@ -55,6 +56,7 @@ The following properties can be specified in the `jandex` task configuration
 | Name                  | Type     | Default Value
 | processDefaultFileSet | boolean  | true
 | indexName             | String   | jandex.idx
+| destination           | File     | build/resources/main/META-INF/jandex.idx
 | fileSets              | FileTree | sourceSets.main.output
 |===
 

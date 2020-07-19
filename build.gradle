@@ -39,10 +39,12 @@ config {
         }
     }
 
-    plugin {
-        enabled             = true
-        id                  = 'org.kordamp.gradle.jandex'
-        implementationClass = 'org.kordamp.gradle.plugin.jandex.JandexPlugin'
+    plugins {
+        plugin {
+            name                = 'jandex'
+            id                  = 'org.kordamp.gradle.jandex'
+            implementationClass = 'org.kordamp.gradle.plugin.jandex.JandexPlugin'
+        }
     }
 
     bintray {
