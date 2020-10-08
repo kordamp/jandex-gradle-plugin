@@ -17,6 +17,7 @@
  */
 package org.kordamp.gradle.plugin.jandex.tasks
 
+import groovy.transform.CompileStatic
 import org.gradle.api.Project
 import org.gradle.api.file.FileTree
 import org.gradle.api.file.FileVisitDetails
@@ -30,6 +31,7 @@ import org.jboss.jandex.Indexer
 /**
  * @author Andres Almiray
  */
+@CompileStatic
 class JandexHelper {
     static final Index readIndex(Project project, File source) {
         FileInputStream input = null
