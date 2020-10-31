@@ -53,6 +53,7 @@ config {
 }
 
 repositories {
+    gradlePluginPortal()
     mavenLocal()
 }
 
