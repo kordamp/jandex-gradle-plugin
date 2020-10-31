@@ -26,28 +26,36 @@ import org.gradle.api.file.FileTree
 import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.options.Option
+import org.kordamp.gradle.property.BooleanState
+import org.kordamp.gradle.property.SimpleBooleanState
+import org.kordamp.gradle.property.SimpleStringState
+import org.kordamp.gradle.property.StringState
 
 /**
  * @author Andres Almiray
  */
 @CompileStatic
 class JandexTask extends DefaultTask {
-    @Input
-    final Property<Boolean> processDefaultFileSet = project.objects.property(Boolean)
-    @Input
-    final Property<String> indexName = project.objects.property(String).convention('jandex.idx')
+    private final BooleanState processDefaultFileSet
+    private final StringState indexName
+
     @OutputFile
     final RegularFileProperty destination = project.objects.fileProperty()
     private ConfigurableFileTree fileSets
 
     JandexTask() {
-        this.processDefaultFileSet.set(true)
-        destination.convention(indexName.map(new Transformer<RegularFile, String>() {
+        processDefaultFileSet = SimpleBooleanState.of(this, 'jandex.process.default.file.set', true)
+        indexName = SimpleStringState.of(this, 'jandex.index.name', 'jandex.idx')
+
+        destination.convention(indexName.provider.map(new Transformer<RegularFile, String>() {
             @Override
             RegularFile transform(String s) {
                 project.layout.buildDirectory.file('jandex/' + s).get()
@@ -55,11 +63,29 @@ class JandexTask extends DefaultTask {
         }))
     }
 
+    @Option(option = 'jandex-process-default-file-set', description = "Include the 'main' source set. Defaults to true")
+    void setProcessDefaultFileSet(boolean value) { processDefaultFileSet.property.set(value) }
+
+    @Option(option = 'jandex-index-name', description = "The name of the index file. Defaults to jandex.idx")
+    void setIndexName(String value) { indexName.property.set(value) }
+
+    @Internal
+    Property<Boolean> getProcessDefaultFileSet() { processDefaultFileSet.property }
+
+    @Input
+    Provider<Boolean> getResolvedProcessDefaultFileSet() { processDefaultFileSet.provider }
+
+    @Internal
+    Property<String> getIndexName() { indexName.property }
+
+    @Input
+    Provider<String> getResolvedIndexName() { indexName.provider }
+
     @InputFiles
     @CompileDynamic
     FileTree getFileSets() {
         FileTree files = null
-        if (processDefaultFileSet.get()) {
+        if (resolvedProcessDefaultFileSet.get()) {
             SourceSetContainer sourceSets = (SourceSetContainer) project.extensions.findByType(SourceSetContainer)
             List<FileTree> fileTrees = sourceSets.findByName('main').output.files.collect({ File dir ->
                 project.fileTree(dir: dir, include: '**/*.class')

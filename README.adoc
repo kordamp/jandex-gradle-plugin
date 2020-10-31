@@ -4,9 +4,8 @@
 :project-repo:    maven
 :project-name:    jandex-gradle-plugin
 :project-group:   org.kordamp.gradle
-:project-version: 0.7.0
+:project-version: 0.8.0
 
-image:http://img.shields.io/travis/{project-owner}/{project-name}/master.svg["Build Status (travis)", link="https://travis-ci.org/{project-owner}/{project-name}"]
 image:https://github.com/{project-owner}/{project-name}/workflows/Build/badge.svg["Build Status", link="https://github.com/{project-owner}/{project-name}/actions"]
 image:http://img.shields.io/badge/license-ASL2-blue.svg["ASL2 Licensed", link="http://opensource.org/licenses/ASL2"]
 image:https://api.bintray.com/packages/{project-owner}/{project-repo}/{project-name}/images/download.svg[link="https://bintray.com/{project-owner}/{project-repo}/{project-name}/_latestVersion"]
@@ -53,10 +52,20 @@ The following properties can be specified in the `jandex` task configuration
 
 [options="header"]
 |===
-| Name                  | Type     | Default Value
-| processDefaultFileSet | boolean  | true
-| indexName             | String   | jandex.idx
-| destination           | File     | build/resources/main/META-INF/jandex.idx
-| fileSets              | FileTree | sourceSets.main.output
+| Name                  | Option                          | Property                        | Type     | Default Value
+| processDefaultFileSet | jandex-process-default-file-set | jandex.process.default.file.set | boolean  | true
+| indexName             | jandex-index-name               | jandex.index.name               | String   | jandex.idx
+| destination           |                                 |                                 | File     | build/resources/main/META-INF/jandex.idx
+| fileSets              |                                 |                                 | FileTree | sourceSets.main.output
 |===
 
+Task properties may be defined on the command line using their option name, or their property name, such as
+
+[source]
+----
+$ gradle jandex --jandex-index-name foo.idx
+$ gradle jandex -Pjandex.index.name=foo.idx
+$ gradle jandex -Djandex.index.name=foo.idx
+$ set JANDEX_INDEX_NAME=foo.idx
+$ gradle jandex
+----
