@@ -23,6 +23,8 @@ import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.DependencySet
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Copy
@@ -39,6 +41,14 @@ class JandexPlugin implements Plugin<Project> {
 
         project.plugins.apply(JavaPlugin)
 
+        Configuration jandexConfiguration = project.configurations.maybeCreate('jandex')
+        jandexConfiguration.defaultDependencies(new Action<DependencySet>() {
+            @Override
+            void execute(DependencySet dependencies) {
+                dependencies.add(project.dependencies.create('org.jboss:jandex:2.2.2.Final'))
+            }
+        })
+
         TaskProvider<JandexTask> jandex = project.tasks.register('jandex', JandexTask,
             new Action<JandexTask>() {
                 @Override
@@ -46,6 +56,7 @@ class JandexPlugin implements Plugin<Project> {
                     t.dependsOn(project.tasks.named('classes'))
                     t.group = BasePlugin.BUILD_GROUP
                     t.description = 'Generate a jandex index'
+                    t.classpath = jandexConfiguration
                 }
             })
 

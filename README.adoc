@@ -5,6 +5,7 @@
 :project-name:    jandex-gradle-plugin
 :project-group:   org.kordamp.gradle
 :project-version: 0.8.0
+:jandex-version:  2.2.2.Final
 
 image:https://github.com/{project-owner}/{project-name}/workflows/Build/badge.svg["Build Status", link="https://github.com/{project-owner}/{project-name}/actions"]
 image:http://img.shields.io/badge/license-ASL2-blue.svg["ASL2 Licensed", link="http://opensource.org/licenses/ASL2"]
@@ -52,11 +53,11 @@ The following properties can be specified in the `jandex` task configuration
 
 [options="header"]
 |===
-| Name                  | Option                          | Property                        | Type     | Default Value
-| processDefaultFileSet | jandex-process-default-file-set | jandex.process.default.file.set | boolean  | true
-| indexName             | jandex-index-name               | jandex.index.name               | String   | jandex.idx
-| destination           |                                 |                                 | File     | build/resources/main/META-INF/jandex.idx
-| fileSets              |                                 |                                 | FileTree | sourceSets.main.output
+| Name                  | Option                          | Property                        | Type                       | Default Value
+| processDefaultFileSet | jandex-process-default-file-set | jandex.process.default.file.set | boolean                    | true
+| indexName             | jandex-index-name               | jandex.index.name               | String                     | jandex.idx
+| destination           |                                 |                                 | File                       | build/resources/main/META-INF/jandex.idx
+| sources               |                                 |                                 | ConfigurableFileCollection | sourceSets.main.output.classesDirs
 |===
 
 Task properties may be defined on the command line using their option name, or their property name, such as
@@ -69,3 +70,22 @@ $ gradle jandex -Djandex.index.name=foo.idx
 $ set JANDEX_INDEX_NAME=foo.idx
 $ gradle jandex
 ----
+
+=== Jandex Version
+
+This plugin relies on Jandex {jandex-version} to perform its jobs, however you may configure a different version if needed.
+Simply add the maven coordinates to the `jandex` configuration as shown next
+
+[source,groovy]
+----
+dependencies {
+    jandex 'org.jboss:jandex:2.2.1.Final'
+}
+----
+
+== Migration
+
+Starting with version `0.9.0` the chosen Jandex dependency must be resolved using explicit repositories, in other words,
+it is no longer part of the plugin's default classpath. Failure to declare a repository from which this dependency may be
+resolved will result in a build failure.
+

@@ -19,14 +19,17 @@ package org.kordamp.gradle.plugin.jandex.tasks
 
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.Transformer
-import org.gradle.api.file.ConfigurableFileTree
-import org.gradle.api.file.FileTree
+import org.gradle.api.artifacts.Configuration
+import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.file.FileCollection
 import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
+import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
@@ -34,6 +37,7 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
+import org.gradle.process.JavaExecSpec
 import org.kordamp.gradle.property.BooleanState
 import org.kordamp.gradle.property.SimpleBooleanState
 import org.kordamp.gradle.property.SimpleStringState
@@ -47,13 +51,19 @@ class JandexTask extends DefaultTask {
     private final BooleanState processDefaultFileSet
     private final StringState indexName
 
+    @Classpath
+    Configuration classpath
+
+    @InputFiles
+    final ConfigurableFileCollection sources
+
     @OutputFile
     final RegularFileProperty destination = project.objects.fileProperty()
-    private ConfigurableFileTree fileSets
 
     JandexTask() {
         processDefaultFileSet = SimpleBooleanState.of(this, 'jandex.process.default.file.set', true)
         indexName = SimpleStringState.of(this, 'jandex.index.name', 'jandex.idx')
+        sources = project.objects.fileCollection()
 
         destination.convention(indexName.provider.map(new Transformer<RegularFile, String>() {
             @Override
@@ -81,29 +91,35 @@ class JandexTask extends DefaultTask {
     @Input
     Provider<String> getResolvedIndexName() { indexName.provider }
 
-    @InputFiles
+    @TaskAction
     @CompileDynamic
-    FileTree getFileSets() {
-        FileTree files = null
+    void generateIndex() {
+        project.javaexec(new Action<JavaExecSpec>() {
+            @Override
+            void execute(JavaExecSpec jes) {
+                jes.main = JandexMain.class.name
+                jes.classpath(resolveClasspath())
+                jes.args(destination.asFile.get().absolutePath, *resolveSources())
+            }
+        })
+    }
+
+    private FileCollection resolveClasspath() {
+        project.files(
+            new File(JandexMain.protectionDomain.codeSource.location.toURI()).absoluteFile,
+            classpath)
+    }
+
+    private List<String> resolveSources() {
+        List<String> files = []
+
         if (resolvedProcessDefaultFileSet.get()) {
             SourceSetContainer sourceSets = (SourceSetContainer) project.extensions.findByType(SourceSetContainer)
-            List<FileTree> fileTrees = sourceSets.findByName('main').output.files.collect({ File dir ->
-                project.fileTree(dir: dir, include: '**/*.class')
-            })
-            files = fileTrees[1..-1].inject(fileTrees[0]) { a, b -> a + b }
+            files.addAll((Collection<String>) sourceSets.findByName('main').output.classesDirs*.absolutePath.flatten())
         }
-        if (this.@fileSets) {
-            files = files ? files + this.@fileSets : this.@fileSets
-        }
+
+        files.addAll((Collection<String>) sources.files*.absolutePath.flatten())
+
         files
-    }
-
-    void setFileSets(FileTree fileSets) {
-        this.@fileSets = project.fileTree(fileSets)
-    }
-
-    @TaskAction
-    void generateIndex() {
-        JandexHelper.createIndex(project, getFileSets(), destination.get().asFile)
     }
 }
