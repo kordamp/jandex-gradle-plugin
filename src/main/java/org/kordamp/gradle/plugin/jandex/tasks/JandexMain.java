@@ -107,8 +107,8 @@ public class JandexMain {
                     if (info != null) {
                         out.println("Indexed " + info.name() + " (" + info.annotations().size() + " annotations)");
                     }
-                } catch (final Exception e) {
-                    throw new IllegalStateException(e.getMessage(), e);
+                } catch (Exception e) {
+                    throw new IOException("Unexpected error while indexing " + file.getAbsolutePath(), e);
                 }
             }
         }
