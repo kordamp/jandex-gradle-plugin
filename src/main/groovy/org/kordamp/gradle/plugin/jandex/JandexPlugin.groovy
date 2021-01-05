@@ -71,7 +71,9 @@ class JandexPlugin implements Plugin<Project> {
             @Override
             @CompileDynamic
             void execute(Copy t) {
-                jandex.get().destination.set(project.file("${t.destinationDir}/META-INF/jandex.idx"))
+                if (jandex.get().resolvedIncludeInJar.get()) {
+                    jandex.get().destination.set(project.file("${t.destinationDir}/META-INF/jandex.idx"))
+                }
             }
         })
     }

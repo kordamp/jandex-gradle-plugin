@@ -55,10 +55,14 @@ The following properties can be specified in the `jandex` task configuration
 |===
 | Name                  | Option                          | Property                        | Type                       | Default Value
 | processDefaultFileSet | jandex-process-default-file-set | jandex.process.default.file.set | boolean                    | true
+| includeInJar          | jandex-includein-jar            | jandex.include.in.jar           | boolean                    | true
 | indexName             | jandex-index-name               | jandex.index.name               | String                     | jandex.idx
-| destination           |                                 |                                 | File                       | build/resources/main/META-INF/jandex.idx
+| destination           |                                 |                                 | File                       | build/jandex/jandex.idx
 | sources               |                                 |                                 | ConfigurableFileCollection | sourceSets.main.output.classesDirs
 |===
+
+NOTE: The generated index file will be copied to `build/resources/main/META-INF/jandex.idx during the invocation of the
+`processResources` task if the `includeInJar` property is set to `true`.
 
 Task properties may be defined on the command line using their option name, or their property name, such as
 

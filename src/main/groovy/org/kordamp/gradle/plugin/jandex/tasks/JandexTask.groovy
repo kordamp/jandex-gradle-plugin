@@ -49,6 +49,7 @@ import org.kordamp.gradle.property.StringState
 @CompileStatic
 class JandexTask extends DefaultTask {
     private final BooleanState processDefaultFileSet
+    private final BooleanState includeInJar
     private final StringState indexName
 
     @Classpath
@@ -62,6 +63,7 @@ class JandexTask extends DefaultTask {
 
     JandexTask() {
         processDefaultFileSet = SimpleBooleanState.of(this, 'jandex.process.default.file.set', true)
+        includeInJar = SimpleBooleanState.of(this, 'jandex.include.in.jar', true)
         indexName = SimpleStringState.of(this, 'jandex.index.name', 'jandex.idx')
         sources = project.objects.fileCollection()
 
@@ -76,14 +78,23 @@ class JandexTask extends DefaultTask {
     @Option(option = 'jandex-process-default-file-set', description = "Include the 'main' source set. Defaults to true")
     void setProcessDefaultFileSet(boolean value) { processDefaultFileSet.property.set(value) }
 
+    @Option(option = 'jandex-include-in-jar', description = "Include the generated index in the default JAR. Defaults to true")
+    void setIncludeInJar(boolean value) { includeInJar.property.set(value) }
+
     @Option(option = 'jandex-index-name', description = "The name of the index file. Defaults to jandex.idx")
     void setIndexName(String value) { indexName.property.set(value) }
 
     @Internal
     Property<Boolean> getProcessDefaultFileSet() { processDefaultFileSet.property }
 
+    @Internal
+    Property<Boolean> getIncludeInJar() { includeInJar.property }
+
     @Input
     Provider<Boolean> getResolvedProcessDefaultFileSet() { processDefaultFileSet.provider }
+
+    @Input
+    Provider<Boolean> getResolvedIncludeInJar() { includeInJar.provider }
 
     @Internal
     Property<String> getIndexName() { indexName.property }
