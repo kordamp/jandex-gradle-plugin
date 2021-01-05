@@ -33,38 +33,68 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Andres Almiray
  */
 public class JandexMain {
-    public static void main(String[] args) {
-        run(new PrintWriter(System.out), new PrintWriter(System.err), args);
-    }
+    private final String[] sources;
+    private boolean verbose;
+    private Path destination;
 
-    public static int run(PrintWriter out, PrintWriter err, String... args) {
-        if (null == args || args.length < 2) {
-            err.println("Invalid arguments. Must define destination and at least one source");
-            return 1;
+    private JandexMain(String... args) {
+        List<String> srcs = new ArrayList<>();
+
+        for (int i = 0; i < args.length; i++) {
+            String arg = args[i];
+
+            if (arg.charAt(0) == '-') {
+                switch (arg.charAt(1)) {
+                    case 'v':
+                        verbose = true;
+                        break;
+                    case 'o':
+                        if (i >= args.length) {
+                            throw new IllegalArgumentException("-o requires an output file name");
+                        }
+
+                        String name = args[++i];
+                        if (name.length() < 1) {
+                            throw new IllegalArgumentException("-o requires an output file name");
+                        }
+
+                        destination = Paths.get(name);
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Option not understood: " + arg);
+                }
+            } else {
+                srcs.add(arg);
+            }
         }
 
-        try {
-            String[] cargs = new String[args.length - 1];
-            System.arraycopy(args, 1, cargs, 0, cargs.length);
-            createIndex(out, err, Paths.get(args[0]), cargs);
-        } catch (IOException e) {
-            e.printStackTrace(err);
-            return 1;
+        sources = srcs.toArray(new String[0]);
+
+        if (sources.length == 0) {
+            throw new IllegalArgumentException("Source location not specified");
         }
 
-        return 0;
+        if (destination == null) {
+            throw new IllegalArgumentException("Missing index location");
+        }
     }
 
-    private static void createIndex(PrintWriter out, PrintWriter err, Path destination, String... sources) throws IOException {
+    private void execute(PrintWriter out, PrintWriter err) throws IOException {
         Indexer indexer = new Indexer();
 
         ClassFileVisitor classFileVisitor = new ClassFileVisitor(out, err, indexer);
         for (String src : sources) {
+            if (verbose) {
+                out.println("Indexing files at " + Paths.get(src).toAbsolutePath());
+            }
             Files.walkFileTree(Paths.get(src), classFileVisitor);
         }
 
@@ -73,11 +103,48 @@ public class JandexMain {
             IndexWriter writer = new IndexWriter(output);
             Index index = indexer.complete();
             writer.write(index);
-            out.println("Index has been written to " + destination.toAbsolutePath());
+            if (verbose) out.println("Index has been written to " + destination.toAbsolutePath());
         }
     }
 
-    private static class ClassFileVisitor extends SimpleFileVisitor<Path> {
+    public static void main(String[] args) {
+        run(new PrintWriter(System.out), new PrintWriter(System.err), args);
+    }
+
+    public static int run(PrintWriter out, PrintWriter err, String... args) {
+        if (args.length == 0) {
+            printUsage(out);
+            return 1;
+        }
+
+        boolean printUsage = true;
+        try {
+            JandexMain jandex = new JandexMain(args);
+            printUsage = false;
+            jandex.execute(out, err);
+        } catch (Exception e) {
+            e.printStackTrace(err);
+
+            if (printUsage) {
+                printUsage(out);
+            }
+
+            return 1;
+        } finally {
+            out.flush();
+        }
+
+        return 0;
+    }
+
+    private static void printUsage(PrintWriter out) {
+        out.println("Usage: jandex [-v] [-o index-file-name] <directory> [<directory>]");
+        out.println("Options:");
+        out.println("  -v  verbose output");
+        out.println("  -o  name the external index file file-name");
+    }
+
+    private class ClassFileVisitor extends SimpleFileVisitor<Path> {
         private final PrintWriter out;
         private final PrintWriter err;
         private final Indexer indexer;
@@ -104,7 +171,7 @@ public class JandexMain {
             if (file.getName().endsWith(".class")) {
                 try (FileInputStream fis = new FileInputStream(file)) {
                     ClassInfo info = indexer.index(fis);
-                    if (info != null) {
+                    if (verbose && info != null) {
                         out.println("Indexed " + info.name() + " (" + info.annotations().size() + " annotations)");
                     }
                 } catch (Exception e) {

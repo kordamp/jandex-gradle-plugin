@@ -97,9 +97,19 @@ class JandexTask extends DefaultTask {
         project.javaexec(new Action<JavaExecSpec>() {
             @Override
             void execute(JavaExecSpec jes) {
+                List<String> args = []
+                if (project.logger.infoEnabled ||
+                    project.logger.debugEnabled ||
+                    project.logger.traceEnabled) {
+                    args << '-v'
+                }
+                args << '-o'
+                args << destination.asFile.get().absolutePath
+                args.addAll(resolveSources())
+
                 jes.main = JandexMain.class.name
                 jes.classpath(resolveClasspath())
-                jes.args(destination.asFile.get().absolutePath, *resolveSources())
+                jes.args(args)
             }
         })
     }
