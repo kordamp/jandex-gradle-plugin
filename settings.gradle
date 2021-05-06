@@ -15,23 +15,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 pluginManagement {
     repositories {
-        jcenter()
         gradlePluginPortal()
+        mavenCentral()
         mavenLocal()
     }
     plugins {
         id 'org.kordamp.gradle.groovy-project' version kordampPluginVersion
-        id 'org.kordamp.gradle.bintray'        version kordampPluginVersion
         id 'org.kordamp.gradle.plugin'         version kordampPluginVersion
     }
 }
 
 buildscript {
     repositories {
-        jcenter()
         gradlePluginPortal()
+        mavenCentral()
         mavenLocal()
     }
     dependencies {

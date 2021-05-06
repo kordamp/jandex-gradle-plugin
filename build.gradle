@@ -15,13 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 plugins {
     id 'java-library'
     id 'groovy'
     id 'org.kordamp.gradle.groovy-project'
-    id 'org.kordamp.gradle.bintray'
     id 'org.kordamp.gradle.plugin'
 }
+
+project.version = file('VERSION').text.trim()
 
 config {
     info {
@@ -45,10 +47,6 @@ config {
             id                  = 'org.kordamp.gradle.jandex'
             implementationClass = 'org.kordamp.gradle.plugin.jandex.JandexPlugin'
         }
-    }
-
-    bintray {
-        skipMavenSync = true
     }
 }
 
