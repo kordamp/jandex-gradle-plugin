@@ -4,7 +4,7 @@
 :project-repo:    maven
 :project-name:    jandex-gradle-plugin
 :project-group:   org.kordamp.gradle
-:project-version: 0.9.0
+:project-version: 0.10.0
 :jandex-version:  2.2.3.Final
 :plugin-id:       {project-group}.jandex
 
