@@ -52,7 +52,6 @@ config {
 
 repositories {
     gradlePluginPortal()
-    mavenLocal()
 }
 
 dependencies {

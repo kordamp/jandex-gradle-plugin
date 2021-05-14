@@ -30,6 +30,7 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Classpath
+import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
@@ -70,6 +71,10 @@ class JandexTask extends DefaultTask {
         destination.convention(indexName.provider.map(new Transformer<RegularFile, String>() {
             @Override
             RegularFile transform(String s) {
+                if (resolvedIncludeInJar.get()) {
+                    File destinationDir = project.tasks.named('processResources', Copy).get().destinationDir
+                    return project.layout.projectDirectory.file("${destinationDir}/META-INF/jandex.idx".toString())
+                }
                 project.layout.buildDirectory.file('jandex/' + s).get()
             }
         }))
