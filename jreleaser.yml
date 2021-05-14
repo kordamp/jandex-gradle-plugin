@@ -29,6 +29,7 @@ release:
   github:
     username: aalmiray
     overwrite: true
+    branch: master
     changelog:
       formatted: ALWAYS
       change: '- {{commitShortHash}} {{commitTitle}}'
