@@ -5,7 +5,7 @@
 :project-name:    jandex-gradle-plugin
 :project-group:   org.kordamp.gradle
 :project-version: 0.10.0
-:jandex-version:  2.2.3.Final
+:jandex-version:  2.3.0.Final
 :plugin-id:       {project-group}.jandex
 
 image:https://github.com/{project-owner}/{project-name}/workflows/Build/badge.svg["Build Status", link="https://github.com/{project-owner}/{project-name}/actions"]
