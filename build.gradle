@@ -23,8 +23,6 @@ plugins {
     id 'org.kordamp.gradle.plugin'
 }
 
-project.version = file('VERSION').text.trim()
-
 config {
     info {
         name          = rootProject.name
