@@ -123,7 +123,11 @@ class JandexTask extends DefaultTask {
                 args << destination.asFile.get().absolutePath
                 args.addAll(resolveSources())
 
-                jes.main = JandexMain.class.name
+                if (jes.hasProperty("mainClass")) {
+                    jes.mainClass = JandexMain.class.name
+                } else {
+                    jes.main = JandexMain.class.name
+                }
                 jes.classpath(resolveClasspath())
                 jes.args(args)
             }
