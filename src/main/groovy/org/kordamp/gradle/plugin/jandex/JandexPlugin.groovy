@@ -48,7 +48,7 @@ class JandexPlugin implements Plugin<Project> {
         jandexConfiguration.defaultDependencies(new Action<DependencySet>() {
             @Override
             void execute(DependencySet dependencies) {
-                dependencies.add(project.dependencies.create('org.jboss:jandex:2.4.1.Final'))
+                dependencies.add(project.dependencies.create('org.jboss:jandex:2.4.2.Final'))
             }
         })
 
