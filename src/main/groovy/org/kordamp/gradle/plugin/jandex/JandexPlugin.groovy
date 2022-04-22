@@ -25,6 +25,7 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.DependencySet
+import org.gradle.api.logging.LogLevel
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.TaskProvider
@@ -37,7 +38,9 @@ import org.kordamp.gradle.plugin.jandex.tasks.JandexTask
 @CompileStatic
 class JandexPlugin implements Plugin<Project> {
     void apply(Project project) {
-        Banner.display(project)
+        if (project.gradle.startParameter.logLevel != LogLevel.QUIET) {
+            Banner.display(project)
+        }
 
         project.plugins.apply(JavaPlugin)
 
