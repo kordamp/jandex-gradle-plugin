@@ -24,7 +24,6 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.Transformer
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.ConfigurableFileCollection
-import org.gradle.api.file.FileCollection
 import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
@@ -38,11 +37,15 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
-import org.gradle.process.JavaExecSpec
+import org.gradle.workers.ClassLoaderWorkerSpec
+import org.gradle.workers.WorkQueue
+import org.gradle.workers.WorkerExecutor
 import org.kordamp.gradle.property.BooleanState
 import org.kordamp.gradle.property.SimpleBooleanState
 import org.kordamp.gradle.property.SimpleStringState
 import org.kordamp.gradle.property.StringState
+
+import javax.inject.Inject
 
 /**
  * @author Andres Almiray
@@ -52,6 +55,7 @@ class JandexTask extends DefaultTask {
     private final BooleanState processDefaultFileSet
     private final BooleanState includeInJar
     private final StringState indexName
+    private final WorkerExecutor workerExecutor
 
     @Classpath
     Configuration classpath
@@ -62,7 +66,9 @@ class JandexTask extends DefaultTask {
     @OutputFile
     final RegularFileProperty destination = project.objects.fileProperty()
 
-    JandexTask() {
+    @Inject
+    JandexTask(WorkerExecutor workerExecutor) {
+        this.workerExecutor = workerExecutor
         processDefaultFileSet = SimpleBooleanState.of(this, 'jandex.process.default.file.set', true)
         includeInJar = SimpleBooleanState.of(this, 'jandex.include.in.jar', true)
         indexName = SimpleStringState.of(this, 'jandex.index.name', 'jandex.idx')
@@ -110,34 +116,20 @@ class JandexTask extends DefaultTask {
     @TaskAction
     @CompileDynamic
     void generateIndex() {
-        project.javaexec(new Action<JavaExecSpec>() {
+        WorkQueue workQueue = workerExecutor.classLoaderIsolation(new Action<ClassLoaderWorkerSpec>() {
             @Override
-            void execute(JavaExecSpec jes) {
-                List<String> args = []
-                if (project.logger.infoEnabled ||
-                    project.logger.debugEnabled ||
-                    project.logger.traceEnabled) {
-                    args << '-v'
-                }
-                args << '-o'
-                args << destination.asFile.get().absolutePath
-                args.addAll(resolveSources())
-
-                if (jes.hasProperty("mainClass")) {
-                    jes.mainClass = JandexMain.class.name
-                } else {
-                    jes.main = JandexMain.class.name
-                }
-                jes.classpath(resolveClasspath())
-                jes.args(args)
+            void execute(ClassLoaderWorkerSpec classLoaderWorkerSpec) {
+                classLoaderWorkerSpec.classpath.from(classpath)
             }
         })
-    }
 
-    private FileCollection resolveClasspath() {
-        project.files(
-            new File(JandexMain.protectionDomain.codeSource.location.toURI()).absoluteFile,
-            classpath)
+        workQueue.submit(JandexWorkAction, new Action<JandexWorkParameters>() {
+            @Override
+            void execute(JandexWorkParameters parameters) {
+                parameters.sources.set(resolveSources())
+                parameters.destination.set(destination)
+            }
+        })
     }
 
     private List<String> resolveSources() {

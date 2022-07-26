@@ -45,7 +45,7 @@ class JandexPlugin implements Plugin<Project> {
 
         project.plugins.apply(JavaPlugin)
 
-        JandexExtension jandexExtension = project.extensions.create('jandex', JandexExtensionImpl, project)
+        JandexExtension jandexExtension = project.extensions.create('jandex', JandexExtensionImpl, project.objects)
 
         Configuration jandexConfiguration = project.configurations.maybeCreate('jandex')
         jandexConfiguration.visible = false
