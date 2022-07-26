@@ -30,6 +30,7 @@ import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.Jar
+import org.kordamp.gradle.plugin.jandex.internal.JandexExtensionImpl
 import org.kordamp.gradle.plugin.jandex.tasks.JandexTask
 
 /**
@@ -44,11 +45,15 @@ class JandexPlugin implements Plugin<Project> {
 
         project.plugins.apply(JavaPlugin)
 
+        JandexExtension jandexExtension = project.extensions.create('jandex', JandexExtensionImpl, project)
+
         Configuration jandexConfiguration = project.configurations.maybeCreate('jandex')
+        jandexConfiguration.visible = false
+        jandexConfiguration.transitive = true
         jandexConfiguration.defaultDependencies(new Action<DependencySet>() {
             @Override
             void execute(DependencySet dependencies) {
-                dependencies.add(project.dependencies.create('org.jboss:jandex:2.4.2.Final'))
+                dependencies.add(project.dependencies.create('org.jboss:jandex:' + jandexExtension.version.get()))
             }
         })
 

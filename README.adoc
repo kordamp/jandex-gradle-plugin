@@ -5,7 +5,7 @@
 :project-name:    jandex-gradle-plugin
 :project-group:   org.kordamp.gradle
 :project-version: 0.12.0
-:jandex-version:  2.4.2.Final
+:jandex-version:  2.4.3.Final
 :plugin-id:       {project-group}.jandex
 
 image:https://github.com/{project-owner}/{project-name}/workflows/Build/badge.svg["Build Status", link="https://github.com/{project-owner}/{project-name}/actions"]
@@ -78,12 +78,12 @@ $ gradle jandex
 === Jandex Version
 
 This plugin relies on Jandex {jandex-version} to perform its jobs, however you may configure a different version if needed.
-Simply add the maven coordinates to the `jandex` configuration as shown next
+Simply add the maven coordinates to the `jandex` extension as shown next
 
 [source,groovy]
 ----
-dependencies {
-    jandex 'org.jboss:jandex:2.2.1.Final'
+jandex {
+    version = '2.2.1.Final'
 }
 ----
 
