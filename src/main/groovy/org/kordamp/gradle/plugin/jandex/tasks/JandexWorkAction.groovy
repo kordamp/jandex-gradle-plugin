@@ -90,7 +90,7 @@ abstract class JandexWorkAction implements WorkAction<JandexWorkParameters> {
                 try {
                     ClassInfo info = indexer.index(fis)
                     if (info != null) {
-                        logger.info('Indexed ' + info.name() + ' (' + info.annotationsMap().size() + ' annotations)')
+                        logger.info('Indexed ' + info.name() + ' (' + info.annotations().size() + ' annotations)')
                     }
                 } catch (Exception e) {
                     throw new IOException('Unexpected error while indexing ' + file.absolutePath, e)
