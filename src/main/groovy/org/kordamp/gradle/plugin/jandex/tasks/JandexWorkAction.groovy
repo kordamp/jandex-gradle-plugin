@@ -46,9 +46,17 @@ abstract class JandexWorkAction implements WorkAction<JandexWorkParameters> {
 
         ClassFileVisitor classFileVisitor = new ClassFileVisitor(indexer)
         for (String src : parameters.sources.get()) {
-            logger.info("Indexing files at " + Paths.get(src).toAbsolutePath())
+            Path path = Paths.get(src)
+            if (!Files.exists(path)) {
+                // Source provided by Gradle does not exist.
+                // This happens when using Kotlin, where the Java class
+                // directory might not actually exist.
+                continue
+            }
 
-            Files.walkFileTree(Paths.get(src), classFileVisitor)
+            logger.info("Indexing files at " + path.toAbsolutePath())
+
+            Files.walkFileTree(path, classFileVisitor)
         }
 
         File destination = parameters.destination.asFile.get()
