@@ -88,8 +88,7 @@ abstract class JandexWorkAction implements WorkAction<JandexWorkParameters> {
 
         @Override
         FileVisitResult visitFileFailed(Path file, IOException e) throws IOException {
-            e.printStackTrace()
-            return FileVisitResult.CONTINUE
+            throw e
         }
 
         private void indexFile(File file) throws IOException {
