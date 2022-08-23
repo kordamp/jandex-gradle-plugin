@@ -18,21 +18,20 @@
 package org.kordamp.gradle.plugin.jandex.internal
 
 import groovy.transform.CompileStatic
-import org.gradle.api.model.ObjectFactory
-import org.gradle.api.provider.Property
-import org.kordamp.gradle.plugin.jandex.JandexExtension
-
-import javax.inject.Inject
 
 /**
+ *
  * @author Andres Almiray
  */
 @CompileStatic
-class JandexExtensionImpl implements JandexExtension {
-    final Property<String> version
+final class DefaultVersions {
+    private final ResourceBundle bundle = ResourceBundle.getBundle('org.kordamp.gradle.plugin.jandex.default_versions')
 
-    @Inject
-    JandexExtensionImpl(ObjectFactory objects) {
-        version = objects.property(String).convention(DefaultVersions.INSTANCE.jandexVersion)
+    static final DefaultVersions INSTANCE = new DefaultVersions()
+
+    final String jandexVersion = bundle.getString('jandex.version')
+
+    private DefaultVersions() {
+        // noop
     }
 }

@@ -54,7 +54,7 @@ repositories {
 dependencies {
     compileOnly gradleApi()
 
-    compileOnly "org.jboss:jandex:$jandexVersion"
+    compileOnly "io.smallrye:jandex:$jandexVersion"
     api "org.kordamp.gradle:base-gradle-plugin:$kordampPluginVersion"
 }
 
@@ -62,9 +62,10 @@ processResources {
     inputs.property('version', project.version)
     filesMatching(['**/*.properties']) {
         expand(
-            'version': project.version,
-            'id'     : 'jandex',
-            'name'   : 'Jandex Gradle plugin'
+            version      : project.version,
+            id           : 'jandex',
+            name         : 'Jandex Gradle plugin',
+            jandexVersion: jandexVersion
         )
     }
 }

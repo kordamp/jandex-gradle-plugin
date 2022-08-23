@@ -22,6 +22,7 @@ import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 import org.gradle.workers.WorkAction
 import org.jboss.jandex.ClassInfo
+import org.jboss.jandex.ClassSummary
 import org.jboss.jandex.Index
 import org.jboss.jandex.IndexWriter
 import org.jboss.jandex.Indexer
@@ -95,9 +96,9 @@ abstract class JandexWorkAction implements WorkAction<JandexWorkParameters> {
             if (file.name.endsWith('.class')) {
                 FileInputStream fis = new FileInputStream(file)
                 try {
-                    ClassInfo info = indexer.index(fis)
-                    if (info != null) {
-                        logger.info('Indexed ' + info.name() + ' (' + info.annotations().size() + ' annotations)')
+                    ClassSummary summary = indexer.indexWithSummary(fis)
+                    if (summary != null) {
+                        logger.info('Indexed ' + summary.name() + ' (' + summary.annotationsCount() + ' annotations)')
                     }
                 } catch (Exception e) {
                     throw new IOException('Unexpected error while indexing ' + file.absolutePath, e)
