@@ -40,7 +40,9 @@ import org.kordamp.gradle.plugin.jandex.tasks.JandexTask
 class JandexPlugin implements Plugin<Project> {
     void apply(Project project) {
         if (project.gradle.startParameter.logLevel != LogLevel.QUIET) {
-            Banner.display(project)
+            project.gradle.sharedServices
+                .registerIfAbsent('jandex-banner', Banner, { spec -> })
+                .get().display(project)
         }
 
         project.plugins.apply(JavaPlugin)
