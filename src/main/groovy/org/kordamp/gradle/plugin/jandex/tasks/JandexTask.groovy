@@ -21,21 +21,27 @@ import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
+import org.gradle.api.NamedDomainObjectSet
 import org.gradle.api.Transformer
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.file.ProjectLayout
 import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
+import org.gradle.api.provider.SetProperty
 import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.options.Option
 import org.gradle.workers.ClassLoaderWorkerSpec
 import org.gradle.workers.WorkQueue
@@ -64,24 +70,37 @@ class JandexTask extends DefaultTask {
     final ConfigurableFileCollection sources
 
     @OutputFile
-    final RegularFileProperty destination = project.objects.fileProperty()
+    final RegularFileProperty destination
+
+    @Internal
+    TaskProvider<Copy> processResourcesTask
+
+    @Internal
+    final Property<ProjectLayout> layout
+
+    @Internal
+    final NamedDomainObjectSet<SourceSet> sourceSets
 
     @Inject
-    JandexTask(WorkerExecutor workerExecutor) {
+    JandexTask(WorkerExecutor workerExecutor, ObjectFactory objects) {
+        layout = objects.property(ProjectLayout)
+        sourceSets = objects.namedDomainObjectSet(SourceSet)
+
         this.workerExecutor = workerExecutor
         processDefaultFileSet = SimpleBooleanState.of(this, 'jandex.process.default.file.set', true)
         includeInJar = SimpleBooleanState.of(this, 'jandex.include.in.jar', true)
         indexName = SimpleStringState.of(this, 'jandex.index.name', 'jandex.idx')
-        sources = project.objects.fileCollection()
+        sources = objects.fileCollection()
+        destination = objects.fileProperty()
 
         destination.convention(indexName.provider.map(new Transformer<RegularFile, String>() {
             @Override
             RegularFile transform(String s) {
                 if (resolvedIncludeInJar.get()) {
-                    File destinationDir = project.tasks.named('processResources', Copy).get().destinationDir
-                    return project.layout.projectDirectory.file("${destinationDir}/META-INF/jandex.idx".toString())
+                    File destinationDir = processResourcesTask.get().destinationDir
+                    return layout.get().projectDirectory.file("${destinationDir}/META-INF/jandex.idx".toString())
                 }
-                project.layout.buildDirectory.file('jandex/' + s).get()
+                layout.get().buildDirectory.file('jandex/' + s).get()
             }
         }))
     }
@@ -136,7 +155,6 @@ class JandexTask extends DefaultTask {
         List<String> files = []
 
         if (resolvedProcessDefaultFileSet.get()) {
-            SourceSetContainer sourceSets = (SourceSetContainer) project.extensions.findByType(SourceSetContainer)
             files.addAll((Collection<String>) sourceSets.findByName('main').output.classesDirs*.absolutePath.flatten())
         }
 

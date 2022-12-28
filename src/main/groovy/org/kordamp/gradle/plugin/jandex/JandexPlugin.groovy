@@ -28,6 +28,8 @@ import org.gradle.api.artifacts.DependencySet
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.tasks.Copy
+import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.Jar
 import org.kordamp.gradle.plugin.jandex.internal.JandexExtensionImpl
@@ -67,6 +69,9 @@ class JandexPlugin implements Plugin<Project> {
                     t.group = BasePlugin.BUILD_GROUP
                     t.description = 'Generate a jandex index'
                     t.classpath = jandexConfiguration
+                    t.processResourcesTask = project.tasks.named('processResources', Copy)
+                    t.layout.set(project.layout)
+                    t.sourceSets.addAll(project.extensions.findByType(SourceSetContainer))
                 }
             })
 
