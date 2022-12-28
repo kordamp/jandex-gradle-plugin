@@ -20,22 +20,25 @@ project:
   name: jandex-gradle-plugin
   description: Jandex Gradle Plugin
   longDescription: Runs Jandex on a Gradle project
-  website: https://github.com/kordamp/jandex-gradle-plugin
+  links:
+    homepage: https://github.com/kordamp/jandex-gradle-plugin
   authors:
     - Andres Almiray
   license: Apache-2.0
-  extraProperties:
-    inceptionYear: 2019
+  inceptionYear: 2019
 
 release:
   github:
+    branch: master
     username: aalmiray
     overwrite: true
-    branch: master
+    milestone:
+      name: '{{projectVersion}}'
+    issues:
+      enabled: true
     changelog:
       formatted: ALWAYS
       preset: conventional-commits
-      format: '- {{commitShortHash}} {{commitTitle}}'
       contributors:
         format: '- {{contributorName}}{{#contributorUsernameAsLink}} ({{.}}){{/contributorUsernameAsLink}}'
       labelers:
@@ -45,7 +48,7 @@ release:
       categories:
         - title: '⚙️  Dependencies'
           key: 'dependencies'
-          order: 70
+          order: 80
           labels:
             - 'dependencies'
       hide:
@@ -58,5 +61,9 @@ release:
 
 announce:
   twitter:
-    active: release
+    active: RELEASE
+    status: 🚀 {{projectName}} {{projectVersion}} has been released! {{releaseNotesUrl}}
+  mastodon:
+    active: RELEASE
+    host: https://mastodon.social
     status: 🚀 {{projectName}} {{projectVersion}} has been released! {{releaseNotesUrl}}

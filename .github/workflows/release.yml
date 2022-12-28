@@ -26,3 +26,4 @@ jobs:
       twitter-consumer-secret: ${{ secrets.TWITTER_CONSUMER_SECRET }}
       twitter-access-token: ${{ secrets.TWITTER_ACCESS_TOKEN }}
       twitter-access-token-secret: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
+      mastodon-access-token: ${{ secrets.MASTODON_ACCESS_TOKEN }}
