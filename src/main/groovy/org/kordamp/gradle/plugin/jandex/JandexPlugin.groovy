@@ -32,6 +32,7 @@ import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.Jar
+import org.gradle.api.tasks.compile.JavaCompile
 import org.kordamp.gradle.plugin.jandex.internal.JandexExtensionImpl
 import org.kordamp.gradle.plugin.jandex.tasks.JandexTask
 
@@ -79,6 +80,16 @@ class JandexPlugin implements Plugin<Project> {
             @Override
             void execute(Task t) {
                 t.finalizedBy(jandex)
+            }
+        })
+
+        project.tasks.named('compileTestJava', JavaCompile).configure(new Action<JavaCompile>() {
+            @Override
+            @CompileDynamic
+            void execute(JavaCompile t) {
+                if (jandex.get().resolvedIncludeInJar.get()) {
+                    t.dependsOn(jandex)
+                }
             }
         })
 
