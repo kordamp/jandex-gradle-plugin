@@ -73,6 +73,9 @@ class JandexPlugin implements Plugin<Project> {
                     t.processResourcesTask = project.tasks.named('processResources', Copy)
                     t.layout.set(project.layout)
                     t.sourceSets.addAll(project.extensions.findByType(SourceSetContainer))
+                    if (t.resolvedProcessDefaultFileSet.get()) {
+                        t.inputs.files(t.sourceSets.findByName('main').output.classesDirs*.absolutePath.flatten())
+                    }
                 }
             })
 
