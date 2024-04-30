@@ -8,6 +8,14 @@
 :jandex-version:  3.1.7
 :plugin-id:       {project-group}.jandex
 
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
 image:https://img.shields.io/github/actions/workflow/status/{project-owner}/{project-name}/early-access.yml?branch=master&logo=github&label=Build["Build Status", link="https://github.com/{project-owner}/{project-name}/actions"]
 image:https://img.shields.io/gradle-plugin-portal/v/{plugin-id}?logo=gradle["Gradle Plugin Portal", link="https://plugins.gradle.org/plugin/{plugin-id}"]
 
@@ -44,6 +52,8 @@ plugins {
 
 This will add a `jandex` task to your build, which will analyze the `main` sourceSets by default, the generated index
 will be placed in `${project.tasks.processResources.destinationDir}/META-INF/jandex.idx`.
+
+NOTE: Requires Java 11+ and Gradle 8+.
 
 == Configuration
 === Plugin configuration
