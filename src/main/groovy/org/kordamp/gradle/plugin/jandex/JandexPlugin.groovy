@@ -76,6 +76,7 @@ class JandexPlugin implements Plugin<Project> {
                     if (t.resolvedProcessDefaultFileSet.get()) {
                         t.inputs.files(t.sourceSets.findByName('main').output.classesDirs*.absolutePath.flatten())
                     }
+                    t.indexVersion = jandexExtension.indexVersion.getOrNull()
                 }
             })
 
