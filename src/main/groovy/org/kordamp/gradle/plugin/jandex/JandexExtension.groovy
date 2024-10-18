@@ -26,4 +26,6 @@ import org.gradle.api.provider.Property
 @CompileStatic
 interface JandexExtension {
     Property<String> getVersion()
+
+    Property<Integer> getIndexVersion()
 }

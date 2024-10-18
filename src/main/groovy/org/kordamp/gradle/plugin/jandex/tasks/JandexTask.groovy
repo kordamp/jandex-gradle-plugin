@@ -36,6 +36,7 @@ import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskAction
@@ -45,7 +46,9 @@ import org.gradle.workers.ClassLoaderWorkerSpec
 import org.gradle.workers.WorkQueue
 import org.gradle.workers.WorkerExecutor
 import org.kordamp.gradle.property.BooleanState
+import org.kordamp.gradle.property.IntegerState
 import org.kordamp.gradle.property.SimpleBooleanState
+import org.kordamp.gradle.property.SimpleIntegerState
 import org.kordamp.gradle.property.SimpleStringState
 import org.kordamp.gradle.property.StringState
 
@@ -59,6 +62,7 @@ class JandexTask extends DefaultTask {
     private final BooleanState processDefaultFileSet
     private final BooleanState includeInJar
     private final StringState indexName
+    private final IntegerState indexVersion
     private final WorkerExecutor workerExecutor
 
     @Classpath
@@ -88,6 +92,7 @@ class JandexTask extends DefaultTask {
         processDefaultFileSet = SimpleBooleanState.of(this, 'jandex.process.default.file.set', true)
         includeInJar = SimpleBooleanState.of(this, 'jandex.include.in.jar', true)
         indexName = SimpleStringState.of(this, 'jandex.index.name', 'jandex.idx')
+        indexVersion = SimpleIntegerState.of(this, 'jandex.index.version')
         sources = objects.fileCollection()
         destination = objects.fileProperty()
 
@@ -112,6 +117,9 @@ class JandexTask extends DefaultTask {
     @Option(option = 'jandex-index-name', description = "The name of the index file. Defaults to jandex.idx")
     void setIndexName(String value) { indexName.property.set(value) }
 
+    @Option(option = 'jandex-index-version', description = "The version of the index file. Defaults to the latest version supported by the invoked Jandex version")
+    void setIndexVersion(Integer value) { indexVersion.property.set(value) }
+
     @Internal
     Property<Boolean> getProcessDefaultFileSet() { processDefaultFileSet.property }
 
@@ -126,6 +134,10 @@ class JandexTask extends DefaultTask {
 
     @Internal
     Property<String> getIndexName() { indexName.property }
+
+    @Input
+    @Optional
+    Property<Integer> getIndexVersion() { indexVersion.property }
 
     @Input
     Provider<String> getResolvedIndexName() { indexName.provider }
@@ -145,6 +157,7 @@ class JandexTask extends DefaultTask {
             void execute(JandexWorkParameters parameters) {
                 parameters.sources.set(resolveSources())
                 parameters.destination.set(destination)
+                parameters.indexVersion.set(indexVersion)
             }
         })
     }

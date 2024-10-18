@@ -20,6 +20,7 @@ package org.kordamp.gradle.plugin.jandex.tasks
 import groovy.transform.CompileStatic
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.Property
 import org.gradle.workers.WorkParameters
 
 /**
@@ -30,4 +31,6 @@ interface JandexWorkParameters extends WorkParameters {
     ListProperty<String> getSources()
 
     RegularFileProperty getDestination()
+
+    Property<Integer> getIndexVersion()
 }

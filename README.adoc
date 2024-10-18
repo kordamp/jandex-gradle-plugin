@@ -66,6 +66,7 @@ The following properties can be specified in the `jandex` task configuration
 | processDefaultFileSet | jandex-process-default-file-set | jandex.process.default.file.set | boolean                    | true
 | includeInJar          | jandex-includein-jar            | jandex.include.in.jar           | boolean                    | true
 | indexName             | jandex-index-name               | jandex.index.name               | String                     | jandex.idx
+| indexVersion          | jandex-index-version            | jandex.index.version            | Integer                    |
 | destination           |                                 |                                 | File                       | build/jandex/jandex.idx
 | sources               |                                 |                                 | ConfigurableFileCollection | sourceSets.main.output.classesDirs
 |===

@@ -62,12 +62,17 @@ abstract class JandexWorkAction implements WorkAction<JandexWorkParameters> {
 
         File destination = parameters.destination.asFile.get()
         FileOutputStream output = new FileOutputStream(destination)
+        Integer indexVersion = parameters.indexVersion.getOrNull()
 
         try {
             destination.parentFile.mkdirs()
             IndexWriter writer = new IndexWriter(output)
             Index index = indexer.complete()
-            writer.write(index)
+            if (indexVersion == null || indexVersion == 0) {
+                writer.write(index)
+            } else {
+                writer.write(index, indexVersion)
+            }
             logger.info('Index has been written to ' + destination.absolutePath)
         } finally {
             output?.close()

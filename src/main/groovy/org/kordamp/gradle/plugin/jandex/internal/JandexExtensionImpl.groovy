@@ -30,9 +30,11 @@ import javax.inject.Inject
 @CompileStatic
 class JandexExtensionImpl implements JandexExtension {
     final Property<String> version
+    final Property<Integer> indexVersion
 
     @Inject
     JandexExtensionImpl(ObjectFactory objects) {
         version = objects.property(String).convention(DefaultVersions.INSTANCE.jandexVersion)
+        indexVersion = objects.property(Integer).unset()
     }
 }
