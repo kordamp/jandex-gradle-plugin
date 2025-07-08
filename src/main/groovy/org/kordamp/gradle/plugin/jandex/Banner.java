@@ -42,6 +42,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public abstract class Banner implements BuildService<Banner.Params> {
     private static final String ORG_KORDAMP_BANNER = "org.kordamp.banner";
+    private static final String ORG_KORDAMP_BANNER_FILE_OPS = "org.kordamp.banner.fileops";
 
     private String productVersion;
     private String productId;
@@ -61,9 +62,32 @@ public abstract class Banner implements BuildService<Banner.Params> {
 
         boolean printBanner = null == System.getProperty(ORG_KORDAMP_BANNER) || Boolean.getBoolean(ORG_KORDAMP_BANNER);
 
-        // Only print the banner, don't read or write any files to avoid configuration cache issues
-        if (printBanner) {
-            System.err.println(banner);
+        // Check if file operations are enabled (default to true unless explicitly disabled)
+        boolean enableFileOps = null == System.getProperty(ORG_KORDAMP_BANNER_FILE_OPS) || Boolean.getBoolean(ORG_KORDAMP_BANNER_FILE_OPS);
+
+        if (!enableFileOps) {
+            // When file operations are disabled (e.g., when using configuration cache), just print the banner
+            if (printBanner) System.err.println(banner);
+        } else {
+            // When file operations are enabled, use the marker file logic
+            File parent = new File(project.getGradle().getGradleUserHomeDir(), "caches");
+            File markerFile = getMarkerFile(parent);
+            if (!markerFile.exists()) {
+                if (printBanner) System.err.println(banner);
+                markerFile.getParentFile().mkdirs();
+                writeQuietly(markerFile, "1");
+            } else {
+                try {
+                    int count = Integer.parseInt(readQuietly(markerFile));
+                    if (count < 3) {
+                        if (printBanner) System.err.println(banner);
+                    }
+                    writeQuietly(markerFile, (count + 1) + "");
+                } catch (NumberFormatException e) {
+                    if (printBanner) System.err.println(banner);
+                    writeQuietly(markerFile, "1");
+                }
+            }
         }
     }
 
@@ -73,5 +97,50 @@ public abstract class Banner implements BuildService<Banner.Params> {
         }
         projectNames.add(project.getRootProject().getName());
         return false;
+    }
+
+    private File getMarkerFile(File parent) {
+        return new File(parent,
+            "kordamp" +
+                File.separator +
+                productId +
+                File.separator +
+                productVersion +
+                File.separator +
+                "marker.txt");
+    }
+
+    private static void writeQuietly(File file, String text) {
+        try {
+            PrintStream out = newPrintStream(new FileOutputStream(file));
+            out.println(text);
+            out.close();
+        } catch (IOException ignored) {
+            // ignored
+        }
+    }
+
+    private static String readQuietly(File file) {
+        try (Scanner in = newScanner(new FileInputStream(file))) {
+            return in.next();
+        } catch (Exception ignored) {
+            return "";
+        }
+    }
+
+    private static Scanner newScanner(InputStream in) {
+        return new Scanner(in, UTF_8.name());
+    }
+
+    private static PrintStream newPrintStream(OutputStream out) {
+        return newPrintStream(out, true);
+    }
+
+    private static PrintStream newPrintStream(OutputStream out, boolean autoFlush) {
+        try {
+            return new PrintStream(out, autoFlush, UTF_8.name());
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 }

@@ -82,7 +82,9 @@ class JandexTask extends DefaultTask {
 
     @Inject
     JandexTask(WorkerExecutor workerExecutor, ObjectFactory objects) {
-        System.out.println("[DEBUG_LOG] JandexTask constructor called from " + this.getClass().getProtectionDomain().getCodeSource().getLocation())
+        // Use proper logging instead of System.out.println
+        def logger = org.gradle.api.logging.Logging.getLogger(JandexTask)
+        logger.debug("JandexTask constructor called from " + this.getClass().getProtectionDomain().getCodeSource().getLocation())
 
         layout = objects.property(ProjectLayout)
 

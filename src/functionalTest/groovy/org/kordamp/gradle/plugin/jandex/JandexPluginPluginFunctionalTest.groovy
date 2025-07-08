@@ -233,7 +233,8 @@ public class AClass {
         def runner = GradleRunner.create()
         runner.forwardOutput()
         runner.withPluginClasspath()
-        runner.withArguments("jandex", "--stacktrace", "--configuration-cache", "--debug")
+        // Add system property to disable file operations in Banner class
+        runner.withArguments("jandex", "--stacktrace", "--configuration-cache", "--debug", "-Dorg.kordamp.banner.fileops=false")
         runner.withProjectDir(projectDir)
         return runner
     }
