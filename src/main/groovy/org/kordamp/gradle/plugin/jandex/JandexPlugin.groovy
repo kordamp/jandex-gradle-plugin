@@ -33,6 +33,7 @@ import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.api.tasks.javadoc.Javadoc
 import org.kordamp.gradle.plugin.jandex.internal.JandexExtensionImpl
 import org.kordamp.gradle.plugin.jandex.tasks.JandexTask
 
@@ -106,5 +107,53 @@ class JandexPlugin implements Plugin<Project> {
                 }
             }
         })
+
+        // Add dependency from javadoc task to jandex task to ensure proper task ordering
+        project.tasks.withType(Javadoc).configureEach(new Action<Javadoc>() {
+            @Override
+            @CompileDynamic
+            void execute(Javadoc t) {
+                if (jandex.get().resolvedIncludeInJar.get()) {
+                    t.dependsOn(jandex)
+                }
+            }
+        })
+
+        // Process additional dependent tasks configured by the user
+        // Use afterEvaluate to ensure the extension has been configured
+        project.afterEvaluate {
+            jandexExtension.additionalDependentTasks.get().each { String taskNameOrPattern ->
+                // Handle exact task name match
+                if (project.tasks.findByName(taskNameOrPattern)) {
+                    project.tasks.named(taskNameOrPattern).configure(new Action<Task>() {
+                        @Override
+                        @CompileDynamic
+                        void execute(Task t) {
+                            if (jandex.get().resolvedIncludeInJar.get()) {
+                                t.dependsOn(jandex)
+                            }
+                        }
+                    })
+                } 
+                // Handle pattern matching (convert Ant-style pattern to regex)
+                else {
+                    String regex = taskNameOrPattern
+                        .replace(".", "\\.")
+                        .replace("*", ".*")
+
+                    project.tasks.matching { Task task -> 
+                        task.name ==~ regex
+                    }.configureEach(new Action<Task>() {
+                        @Override
+                        @CompileDynamic
+                        void execute(Task t) {
+                            if (jandex.get().resolvedIncludeInJar.get()) {
+                                t.dependsOn(jandex)
+                            }
+                        }
+                    })
+                }
+            }
+        }
     }
 }

@@ -334,4 +334,137 @@ public class AClass {
 
         // For now, just test the first run to isolate the issue
     }
+
+    @Test
+    void testJavadocDependsOnJandex() {
+        projectDir = new File("build/functionalTestFixture/javadocDependency_${System.currentTimeMillis()}")
+        projectDir.mkdirs()
+
+        settingsFile.text = ""
+        buildFile.text = """
+plugins {
+    id 'org.kordamp.gradle.jandex'
+}
+
+repositories {
+    mavenCentral()
+}
+"""
+
+        sourceFileAClass.text = """
+package com.sample;
+
+/**
+ * Sample class for javadoc generation
+ */
+public class AClass {
+    /**
+     * Says hi
+     */
+    public void sayHi() {
+        System.out.println("hi");
+    }
+}
+"""
+        // Run javadoc task with dry-run to check task dependencies
+        def runner = GradleRunner.create()
+        runner.forwardOutput()
+        runner.withPluginClasspath()
+        runner.withArguments("javadoc", "--dry-run")
+        runner.withProjectDir(projectDir)
+
+        def result = runner.build()
+
+        // Check that the output contains both javadoc and jandex tasks
+        Assertions.assertThat(result.output).contains(":javadoc")
+        Assertions.assertThat(result.output).contains(":jandex")
+
+        // Verify the order - jandex should come before javadoc in the execution plan
+        int jandexIndex = result.output.indexOf(":jandex")
+        int javadocIndex = result.output.indexOf(":javadoc")
+        Assertions.assertThat(jandexIndex).isLessThan(javadocIndex)
+    }
+
+    @Test
+    void testAdditionalDependentTasks() {
+        projectDir = new File("build/functionalTestFixture/additionalDependentTasks_${System.currentTimeMillis()}")
+        projectDir.mkdirs()
+
+        settingsFile.text = ""
+        buildFile.text = """
+plugins {
+    id 'org.kordamp.gradle.jandex'
+}
+
+repositories {
+    mavenCentral()
+}
+
+// Define a custom task
+task customTask {
+    doLast {
+        println "Custom task executed"
+    }
+}
+
+// Configure additional dependent tasks
+jandex {
+    additionalDependentTasks = ['customTask', '*Test']
+}
+"""
+
+        sourceFileAClass.text = """
+package com.sample;
+
+public class AClass {
+    public void sayHi() {
+        System.out.println("hi");
+    }
+}
+"""
+        // Run customTask with dry-run to check task dependencies
+        def runner = GradleRunner.create()
+        runner.forwardOutput()
+        runner.withPluginClasspath()
+        runner.withArguments("customTask", "--dry-run")
+        runner.withProjectDir(projectDir)
+
+        def result = runner.build()
+
+        // Check that the output contains both customTask and jandex tasks
+        Assertions.assertThat(result.output).contains(":customTask")
+        Assertions.assertThat(result.output).contains(":jandex")
+
+        // Verify the order - jandex should come before customTask in the execution plan
+        int jandexIndex = result.output.indexOf(":jandex")
+        int customTaskIndex = result.output.indexOf(":customTask")
+        Assertions.assertThat(jandexIndex).isLessThan(customTaskIndex)
+
+        // Create a test task to verify pattern matching
+        buildFile.text += """
+task someTest {
+    doLast {
+        println "Test task executed"
+    }
+}
+"""
+
+        // Run someTest with dry-run to check task dependencies
+        def runner2 = GradleRunner.create()
+        runner2.forwardOutput()
+        runner2.withPluginClasspath()
+        runner2.withArguments("someTest", "--dry-run")
+        runner2.withProjectDir(projectDir)
+
+        def result2 = runner2.build()
+
+        // Check that the output contains both someTest and jandex tasks
+        Assertions.assertThat(result2.output).contains(":someTest")
+        Assertions.assertThat(result2.output).contains(":jandex")
+
+        // Verify the order - jandex should come before someTest in the execution plan
+        int jandexIndex2 = result2.output.indexOf(":jandex")
+        int someTestIndex = result2.output.indexOf(":someTest")
+        Assertions.assertThat(jandexIndex2).isLessThan(someTestIndex)
+    }
 }
