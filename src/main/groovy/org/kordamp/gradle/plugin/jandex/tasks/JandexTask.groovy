@@ -1,7 +1,7 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
  *
- * Copyright 2019-2024 Andres Almiray.
+ * Copyright 2019-2025 Andres Almiray.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,9 @@ import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
-import org.gradle.api.NamedDomainObjectSet
 import org.gradle.api.Transformer
-import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.ProjectLayout
 import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
@@ -38,19 +37,11 @@ import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
-import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskAction
-import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.options.Option
 import org.gradle.workers.ClassLoaderWorkerSpec
 import org.gradle.workers.WorkQueue
 import org.gradle.workers.WorkerExecutor
-import org.kordamp.gradle.property.BooleanState
-import org.kordamp.gradle.property.IntegerState
-import org.kordamp.gradle.property.SimpleBooleanState
-import org.kordamp.gradle.property.SimpleIntegerState
-import org.kordamp.gradle.property.SimpleStringState
-import org.kordamp.gradle.property.StringState
 
 import javax.inject.Inject
 
@@ -59,88 +50,104 @@ import javax.inject.Inject
  */
 @CompileStatic
 class JandexTask extends DefaultTask {
-    private final BooleanState processDefaultFileSet
-    private final BooleanState includeInJar
-    private final StringState indexName
-    private final IntegerState indexVersion
+    private final Property<Boolean> processDefaultFileSet
+    private final Property<Boolean> includeInJar
+    private final Property<String> indexName
+    private final Property<Integer> indexVersion
     private final WorkerExecutor workerExecutor
 
     @Classpath
-    Configuration classpath
+    final ConfigurableFileCollection classpathFiles
 
     @InputFiles
     final ConfigurableFileCollection sources
+
+    @InputFiles
+    final ConfigurableFileCollection mainClassesDirs
 
     @OutputFile
     final RegularFileProperty destination
 
     @Internal
-    TaskProvider<Copy> processResourcesTask
+    final DirectoryProperty processResourcesDir
 
     @Internal
     final Property<ProjectLayout> layout
 
-    @Internal
-    final NamedDomainObjectSet<SourceSet> sourceSets
-
     @Inject
     JandexTask(WorkerExecutor workerExecutor, ObjectFactory objects) {
+        System.out.println("[DEBUG_LOG] JandexTask constructor called from " + this.getClass().getProtectionDomain().getCodeSource().getLocation())
+
         layout = objects.property(ProjectLayout)
-        sourceSets = objects.namedDomainObjectSet(SourceSet)
 
         this.workerExecutor = workerExecutor
-        processDefaultFileSet = SimpleBooleanState.of(this, 'jandex.process.default.file.set', true)
-        includeInJar = SimpleBooleanState.of(this, 'jandex.include.in.jar', true)
-        indexName = SimpleStringState.of(this, 'jandex.index.name', 'jandex.idx')
-        indexVersion = SimpleIntegerState.of(this, 'jandex.index.version')
+        processDefaultFileSet = objects.property(Boolean)
+        processDefaultFileSet.convention(true)
+        includeInJar = objects.property(Boolean)
+        includeInJar.convention(true)
+        indexName = objects.property(String)
+        indexName.convention('jandex.idx')
+        indexVersion = objects.property(Integer)
         sources = objects.fileCollection()
+        mainClassesDirs = objects.fileCollection()
+        classpathFiles = objects.fileCollection()
+        processResourcesDir = objects.directoryProperty()
         destination = objects.fileProperty()
 
-        destination.convention(indexName.provider.map(new Transformer<RegularFile, String>() {
+        destination.convention(indexName.flatMap(new Transformer<Provider<RegularFile>, String>() {
             @Override
-            RegularFile transform(String s) {
-                if (resolvedIncludeInJar.get()) {
-                    File destinationDir = processResourcesTask.get().destinationDir
-                    return layout.get().projectDirectory.file("${destinationDir}/META-INF/jandex.idx".toString())
-                }
-                layout.get().buildDirectory.file('jandex/' + s).get()
+            Provider<RegularFile> transform(String s) {
+                return includeInJar.flatMap(new Transformer<Provider<RegularFile>, Boolean>() {
+                    @Override
+                    Provider<RegularFile> transform(Boolean includeInJar) {
+                        if (includeInJar) {
+                            return processResourcesDir.file("META-INF/jandex.idx")
+                        }
+                        return layout.flatMap(new Transformer<Provider<RegularFile>, ProjectLayout>() {
+                            @Override
+                            Provider<RegularFile> transform(ProjectLayout l) {
+                                return l.getBuildDirectory().file('jandex/' + s)
+                            }
+                        })
+                    }
+                })
             }
         }))
     }
 
     @Option(option = 'jandex-process-default-file-set', description = "Include the 'main' source set. Defaults to true")
-    void setProcessDefaultFileSet(boolean value) { processDefaultFileSet.property.set(value) }
+    void setProcessDefaultFileSet(boolean value) { processDefaultFileSet.set(value) }
 
     @Option(option = 'jandex-include-in-jar', description = "Include the generated index in the default JAR. Defaults to true")
-    void setIncludeInJar(boolean value) { includeInJar.property.set(value) }
+    void setIncludeInJar(boolean value) { includeInJar.set(value) }
 
     @Option(option = 'jandex-index-name', description = "The name of the index file. Defaults to jandex.idx")
-    void setIndexName(String value) { indexName.property.set(value) }
+    void setIndexName(String value) { indexName.set(value) }
 
     @Option(option = 'jandex-index-version', description = "The version of the index file. Defaults to the latest version supported by the invoked Jandex version")
-    void setIndexVersion(Integer value) { indexVersion.property.set(value) }
+    void setIndexVersion(Integer value) { indexVersion.set(value) }
 
     @Internal
-    Property<Boolean> getProcessDefaultFileSet() { processDefaultFileSet.property }
+    Property<Boolean> getProcessDefaultFileSet() { processDefaultFileSet }
 
     @Internal
-    Property<Boolean> getIncludeInJar() { includeInJar.property }
+    Property<Boolean> getIncludeInJar() { includeInJar }
 
     @Input
-    Provider<Boolean> getResolvedProcessDefaultFileSet() { processDefaultFileSet.provider }
+    Provider<Boolean> getResolvedProcessDefaultFileSet() { processDefaultFileSet }
 
     @Input
-    Provider<Boolean> getResolvedIncludeInJar() { includeInJar.provider }
+    Provider<Boolean> getResolvedIncludeInJar() { includeInJar }
 
     @Internal
-    Property<String> getIndexName() { indexName.property }
+    Property<String> getIndexName() { indexName }
 
     @Input
     @Optional
-    Property<Integer> getIndexVersion() { indexVersion.property }
+    Property<Integer> getIndexVersion() { indexVersion }
 
     @Input
-    Provider<String> getResolvedIndexName() { indexName.provider }
+    Provider<String> getResolvedIndexName() { indexName }
 
     @TaskAction
     @CompileDynamic
@@ -148,7 +155,7 @@ class JandexTask extends DefaultTask {
         WorkQueue workQueue = workerExecutor.classLoaderIsolation(new Action<ClassLoaderWorkerSpec>() {
             @Override
             void execute(ClassLoaderWorkerSpec classLoaderWorkerSpec) {
-                classLoaderWorkerSpec.classpath.from(classpath)
+                classLoaderWorkerSpec.classpath.from(classpathFiles)
             }
         })
 
@@ -166,7 +173,7 @@ class JandexTask extends DefaultTask {
         List<String> files = []
 
         if (resolvedProcessDefaultFileSet.get()) {
-            files.addAll((Collection<String>) sourceSets.findByName('main').output.classesDirs*.absolutePath.flatten())
+            files.addAll((Collection<String>) mainClassesDirs.files*.absolutePath.flatten())
         }
 
         files.addAll((Collection<String>) sources.files*.absolutePath.flatten())

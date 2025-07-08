@@ -1,7 +1,7 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
  *
- * Copyright 2019-2024 Andres Almiray.
+ * Copyright 2019-2025 Andres Almiray.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,23 +61,9 @@ public abstract class Banner implements BuildService<Banner.Params> {
 
         boolean printBanner = null == System.getProperty(ORG_KORDAMP_BANNER) || Boolean.getBoolean(ORG_KORDAMP_BANNER);
 
-        File parent = new File(project.getGradle().getGradleUserHomeDir(), "caches");
-        File markerFile = getMarkerFile(parent);
-        if (!markerFile.exists()) {
-            if (printBanner) System.err.println(banner);
-            markerFile.getParentFile().mkdirs();
-            writeQuietly(markerFile, "1");
-        } else {
-            try {
-                int count = Integer.parseInt(readQuietly(markerFile));
-                if (count < 3) {
-                    if (printBanner) System.err.println(banner);
-                }
-                writeQuietly(markerFile, (count + 1) + "");
-            } catch (NumberFormatException e) {
-                if (printBanner) System.err.println(banner);
-                writeQuietly(markerFile, "1");
-            }
+        // Only print the banner, don't read or write any files to avoid configuration cache issues
+        if (printBanner) {
+            System.err.println(banner);
         }
     }
 
