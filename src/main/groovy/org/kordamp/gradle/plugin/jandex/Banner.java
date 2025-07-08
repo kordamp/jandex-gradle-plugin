@@ -74,49 +74,4 @@ public abstract class Banner implements BuildService<Banner.Params> {
         projectNames.add(project.getRootProject().getName());
         return false;
     }
-
-    private File getMarkerFile(File parent) {
-        return new File(parent,
-            "kordamp" +
-                File.separator +
-                productId +
-                File.separator +
-                productVersion +
-                File.separator +
-                "marker.txt");
-    }
-
-    private static void writeQuietly(File file, String text) {
-        try {
-            PrintStream out = newPrintStream(new FileOutputStream(file));
-            out.println(text);
-            out.close();
-        } catch (IOException ignored) {
-            // ignored
-        }
-    }
-
-    private static String readQuietly(File file) {
-        try (Scanner in = newScanner(new FileInputStream(file))) {
-            return in.next();
-        } catch (Exception ignored) {
-            return "";
-        }
-    }
-
-    private static Scanner newScanner(InputStream in) {
-        return new Scanner(in, UTF_8.name());
-    }
-
-    private static PrintStream newPrintStream(OutputStream out) {
-        return newPrintStream(out, true);
-    }
-
-    private static PrintStream newPrintStream(OutputStream out, boolean autoFlush) {
-        try {
-            return new PrintStream(out, autoFlush, UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
 }

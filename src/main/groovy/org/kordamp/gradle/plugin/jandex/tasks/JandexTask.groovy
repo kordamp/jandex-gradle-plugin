@@ -30,6 +30,12 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
+import org.kordamp.gradle.property.BooleanState
+import org.kordamp.gradle.property.IntegerState
+import org.kordamp.gradle.property.SimpleBooleanState
+import org.kordamp.gradle.property.SimpleIntegerState
+import org.kordamp.gradle.property.SimpleStringState
+import org.kordamp.gradle.property.StringState
 import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Input
@@ -81,13 +87,67 @@ class JandexTask extends DefaultTask {
         layout = objects.property(ProjectLayout)
 
         this.workerExecutor = workerExecutor
+
+        // Create properties with support for command line flags, env vars, and system properties
         processDefaultFileSet = objects.property(Boolean)
         processDefaultFileSet.convention(true)
+        // Check system property
+        String sysPropProcessDefaultFileSet = System.getProperty("jandex.process.default.file.set")
+        if (sysPropProcessDefaultFileSet != null) {
+            processDefaultFileSet.set(Boolean.parseBoolean(sysPropProcessDefaultFileSet))
+        }
+        // Check environment variable
+        String envProcessDefaultFileSet = System.getenv("JANDEX_PROCESS_DEFAULT_FILE_SET")
+        if (envProcessDefaultFileSet != null) {
+            processDefaultFileSet.set(Boolean.parseBoolean(envProcessDefaultFileSet))
+        }
+
         includeInJar = objects.property(Boolean)
         includeInJar.convention(true)
+        // Check system property
+        String sysPropIncludeInJar = System.getProperty("jandex.include.in.jar")
+        if (sysPropIncludeInJar != null) {
+            includeInJar.set(Boolean.parseBoolean(sysPropIncludeInJar))
+        }
+        // Check environment variable
+        String envIncludeInJar = System.getenv("JANDEX_INCLUDE_IN_JAR")
+        if (envIncludeInJar != null) {
+            includeInJar.set(Boolean.parseBoolean(envIncludeInJar))
+        }
+
         indexName = objects.property(String)
         indexName.convention('jandex.idx')
+        // Check system property
+        String sysPropIndexName = System.getProperty("jandex.index.name")
+        if (sysPropIndexName != null) {
+            indexName.set(sysPropIndexName)
+        }
+        // Check environment variable
+        String envIndexName = System.getenv("JANDEX_INDEX_NAME")
+        if (envIndexName != null) {
+            indexName.set(envIndexName)
+        }
+
         indexVersion = objects.property(Integer)
+        // Check system property
+        String sysPropIndexVersion = System.getProperty("jandex.index.version")
+        if (sysPropIndexVersion != null) {
+            try {
+                indexVersion.set(Integer.parseInt(sysPropIndexVersion))
+            } catch (NumberFormatException ignored) {
+                // Ignore invalid values
+            }
+        }
+        // Check environment variable
+        String envIndexVersion = System.getenv("JANDEX_INDEX_VERSION")
+        if (envIndexVersion != null) {
+            try {
+                indexVersion.set(Integer.parseInt(envIndexVersion))
+            } catch (NumberFormatException ignored) {
+                // Ignore invalid values
+            }
+        }
+
         sources = objects.fileCollection()
         mainClassesDirs = objects.fileCollection()
         classpathFiles = objects.fileCollection()
