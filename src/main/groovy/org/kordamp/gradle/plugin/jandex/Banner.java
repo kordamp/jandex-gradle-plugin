@@ -43,6 +43,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public abstract class Banner implements BuildService<Banner.Params> {
     private static final String ORG_KORDAMP_BANNER = "org.kordamp.banner";
     private static final String ORG_KORDAMP_BANNER_FILE_OPS = "org.kordamp.banner.fileops";
+    private static final String GRADLE_CONFIGURATION_CACHE = "org.gradle.configuration-cache";
 
     private String productVersion;
     private String productId;
@@ -62,8 +63,25 @@ public abstract class Banner implements BuildService<Banner.Params> {
 
         boolean printBanner = null == System.getProperty(ORG_KORDAMP_BANNER) || Boolean.getBoolean(ORG_KORDAMP_BANNER);
 
-        // Check if file operations are enabled (default to true unless explicitly disabled)
-        boolean enableFileOps = null == System.getProperty(ORG_KORDAMP_BANNER_FILE_OPS) || Boolean.getBoolean(ORG_KORDAMP_BANNER_FILE_OPS);
+        // Check if configuration cache is enabled
+        // Gradle sets this property when configuration cache is enabled via --configuration-cache
+        boolean configCacheEnabled = System.getProperty(GRADLE_CONFIGURATION_CACHE) != null ||
+                                      "true".equals(System.getProperty("gradle.configuration-cache.internal"));
+
+        // Check if file operations are enabled:
+        // 1. If the manual flag is set, respect it
+        // 2. If configuration cache is enabled, disable file operations
+        // 3. Otherwise, enable file operations
+        boolean manualFlagSet = System.getProperty(ORG_KORDAMP_BANNER_FILE_OPS) != null;
+        boolean enableFileOps;
+
+        if (manualFlagSet) {
+            // If manual flag is set, respect it
+            enableFileOps = Boolean.getBoolean(ORG_KORDAMP_BANNER_FILE_OPS);
+        } else {
+            // If configuration cache is enabled, disable file operations
+            enableFileOps = !configCacheEnabled;
+        }
 
         if (!enableFileOps) {
             // When file operations are disabled (e.g., when using configuration cache), just print the banner
