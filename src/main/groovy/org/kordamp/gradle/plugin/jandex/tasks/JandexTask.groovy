@@ -27,11 +27,12 @@ import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.ProjectLayout
 import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.logging.Logging
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
+import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.tasks.Classpath
-import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
@@ -74,75 +75,34 @@ class JandexTask extends DefaultTask {
     @Internal
     final Property<ProjectLayout> layout
 
+    private final ProviderFactory providerFactory
+
     @Inject
-    JandexTask(WorkerExecutor workerExecutor, ObjectFactory objects) {
+    JandexTask(WorkerExecutor workerExecutor, ObjectFactory objects, ProviderFactory providerFactory) {
         // Use proper logging instead of System.out.println
-        def logger = org.gradle.api.logging.Logging.getLogger(JandexTask)
+        def logger = Logging.getLogger(JandexTask)
         logger.debug("JandexTask constructor called from " + this.getClass().getProtectionDomain().getCodeSource().getLocation())
 
         layout = objects.property(ProjectLayout)
 
         this.workerExecutor = workerExecutor
+        this.providerFactory = providerFactory
 
         // Create properties with support for command line flags, env vars, and system properties
         processDefaultFileSet = objects.property(Boolean)
+        // Set default value
         processDefaultFileSet.convention(true)
-        // Check system property
-        String sysPropProcessDefaultFileSet = System.getProperty("jandex.process.default.file.set")
-        if (sysPropProcessDefaultFileSet != null) {
-            processDefaultFileSet.set(Boolean.parseBoolean(sysPropProcessDefaultFileSet))
-        }
-        // Check environment variable
-        String envProcessDefaultFileSet = System.getenv("JANDEX_PROCESS_DEFAULT_FILE_SET")
-        if (envProcessDefaultFileSet != null) {
-            processDefaultFileSet.set(Boolean.parseBoolean(envProcessDefaultFileSet))
-        }
-
+        
         includeInJar = objects.property(Boolean)
+        // Set default value
         includeInJar.convention(true)
-        // Check system property
-        String sysPropIncludeInJar = System.getProperty("jandex.include.in.jar")
-        if (sysPropIncludeInJar != null) {
-            includeInJar.set(Boolean.parseBoolean(sysPropIncludeInJar))
-        }
-        // Check environment variable
-        String envIncludeInJar = System.getenv("JANDEX_INCLUDE_IN_JAR")
-        if (envIncludeInJar != null) {
-            includeInJar.set(Boolean.parseBoolean(envIncludeInJar))
-        }
-
+        
         indexName = objects.property(String)
+        // Set default value
         indexName.convention('jandex.idx')
-        // Check system property
-        String sysPropIndexName = System.getProperty("jandex.index.name")
-        if (sysPropIndexName != null) {
-            indexName.set(sysPropIndexName)
-        }
-        // Check environment variable
-        String envIndexName = System.getenv("JANDEX_INDEX_NAME")
-        if (envIndexName != null) {
-            indexName.set(envIndexName)
-        }
-
+        
         indexVersion = objects.property(Integer)
-        // Check system property
-        String sysPropIndexVersion = System.getProperty("jandex.index.version")
-        if (sysPropIndexVersion != null) {
-            try {
-                indexVersion.set(Integer.parseInt(sysPropIndexVersion))
-            } catch (NumberFormatException ignored) {
-                // Ignore invalid values
-            }
-        }
-        // Check environment variable
-        String envIndexVersion = System.getenv("JANDEX_INDEX_VERSION")
-        if (envIndexVersion != null) {
-            try {
-                indexVersion.set(Integer.parseInt(envIndexVersion))
-            } catch (NumberFormatException ignored) {
-                // Ignore invalid values
-            }
-        }
+        // No default value for indexVersion
 
         sources = objects.fileCollection()
         mainClassesDirs = objects.fileCollection()
@@ -172,16 +132,127 @@ class JandexTask extends DefaultTask {
     }
 
     @Option(option = 'jandex-process-default-file-set', description = "Include the 'main' source set. Defaults to true")
-    void setProcessDefaultFileSet(boolean value) { processDefaultFileSet.set(value) }
+    void setProcessDefaultFileSet(boolean value) { 
+        // Command line options have highest precedence
+        processDefaultFileSet.set(value) 
+    }
 
     @Option(option = 'jandex-include-in-jar', description = "Include the generated index in the default JAR. Defaults to true")
-    void setIncludeInJar(boolean value) { includeInJar.set(value) }
+    void setIncludeInJar(boolean value) { 
+        // Command line options have highest precedence
+        includeInJar.set(value) 
+    }
 
     @Option(option = 'jandex-index-name', description = "The name of the index file. Defaults to jandex.idx")
-    void setIndexName(String value) { indexName.set(value) }
+    void setIndexName(String value) { 
+        // Command line options have highest precedence
+        indexName.set(value) 
+    }
 
     @Option(option = 'jandex-index-version', description = "The version of the index file. Defaults to the latest version supported by the invoked Jandex version")
-    void setIndexVersion(Integer value) { indexVersion.set(value) }
+    void setIndexVersion(Integer value) { 
+        // Command line options have highest precedence
+        indexVersion.set(value) 
+    }
+    
+    // Add methods to check system properties and environment variables
+    // These will be called during task execution, not configuration
+    
+    private boolean getProcessDefaultFileSetValue() {
+        // Check command line option first (already set via setProcessDefaultFileSet)
+        if (processDefaultFileSet.isPresent()) {
+            return processDefaultFileSet.get()
+        }
+        
+        // Check environment variable
+        String envValue = System.getenv("JANDEX_PROCESS_DEFAULT_FILE_SET")
+        if (envValue != null) {
+            return Boolean.parseBoolean(envValue)
+        }
+        
+        // Check system property
+        String sysPropValue = System.getProperty("jandex.process.default.file.set")
+        if (sysPropValue != null) {
+            return Boolean.parseBoolean(sysPropValue)
+        }
+        
+        // Fall back to default
+        return true
+    }
+    
+    private boolean getIncludeInJarValue() {
+        // Check command line option first (already set via setIncludeInJar)
+        if (includeInJar.isPresent()) {
+            return includeInJar.get()
+        }
+        
+        // Check environment variable
+        String envValue = System.getenv("JANDEX_INCLUDE_IN_JAR")
+        if (envValue != null) {
+            return Boolean.parseBoolean(envValue)
+        }
+        
+        // Check system property
+        String sysPropValue = System.getProperty("jandex.include.in.jar")
+        if (sysPropValue != null) {
+            return Boolean.parseBoolean(sysPropValue)
+        }
+        
+        // Fall back to default
+        return true
+    }
+    
+    private String getIndexNameValue() {
+        // Check command line option first (already set via setIndexName)
+        if (indexName.isPresent()) {
+            return indexName.get()
+        }
+        
+        // Check environment variable
+        String envValue = System.getenv("JANDEX_INDEX_NAME")
+        if (envValue != null) {
+            return envValue
+        }
+        
+        // Check system property
+        String sysPropValue = System.getProperty("jandex.index.name")
+        if (sysPropValue != null) {
+            return sysPropValue
+        }
+        
+        // Fall back to default
+        return 'jandex.idx'
+    }
+    
+    private Integer getIndexVersionValue() {
+        // Check command line option first (already set via setIndexVersion)
+        if (indexVersion.isPresent()) {
+            return indexVersion.get()
+        }
+        
+        // Check environment variable
+        String envValue = System.getenv("JANDEX_INDEX_VERSION")
+        if (envValue != null) {
+            try {
+                return Integer.parseInt(envValue)
+            } catch (NumberFormatException ignored) {
+                // Ignore invalid values
+            }
+        }
+        
+        // Check system property
+        String sysPropValue = System.getProperty("jandex.index.version")
+        if (sysPropValue != null) {
+            try {
+                return Integer.parseInt(sysPropValue)
+            } catch (NumberFormatException ignored) {
+                // Ignore invalid values
+            }
+        }
+        
+        // No default for indexVersion
+        return null
+    }
 
     @Internal
     Property<Boolean> getProcessDefaultFileSet() { processDefaultFileSet }
@@ -190,20 +261,28 @@ class JandexTask extends DefaultTask {
     Property<Boolean> getIncludeInJar() { includeInJar }
 
     @Input
-    Provider<Boolean> getResolvedProcessDefaultFileSet() { processDefaultFileSet }
+    Provider<Boolean> getResolvedProcessDefaultFileSet() { 
+        return providerFactory.provider({ getProcessDefaultFileSetValue() })
+    }
 
     @Input
-    Provider<Boolean> getResolvedIncludeInJar() { includeInJar }
+    Provider<Boolean> getResolvedIncludeInJar() { 
+        return providerFactory.provider({ getIncludeInJarValue() })
+    }
 
     @Internal
     Property<String> getIndexName() { indexName }
 
     @Input
     @Optional
-    Property<Integer> getIndexVersion() { indexVersion }
+    Property<Integer> getIndexVersion() { 
+        return indexVersion
+    }
 
     @Input
-    Provider<String> getResolvedIndexName() { indexName }
+    Provider<String> getResolvedIndexName() { 
+        return providerFactory.provider({ getIndexNameValue() })
+    }
 
     @TaskAction
     @CompileDynamic
@@ -220,7 +299,12 @@ class JandexTask extends DefaultTask {
             void execute(JandexWorkParameters parameters) {
                 parameters.sources.set(resolveSources())
                 parameters.destination.set(destination)
-                parameters.indexVersion.set(indexVersion)
+                
+                // Use the method that checks system properties and environment variables
+                Integer version = getIndexVersionValue()
+                if (version != null) {
+                    parameters.indexVersion.set(version)
+                }
             }
         })
     }
@@ -228,7 +312,7 @@ class JandexTask extends DefaultTask {
     private List<String> resolveSources() {
         List<String> files = []
 
-        if (resolvedProcessDefaultFileSet.get()) {
+        if (resolvedProcessDefaultFileSet) {
             files.addAll((Collection<String>) mainClassesDirs.files*.absolutePath.flatten())
         }
 
