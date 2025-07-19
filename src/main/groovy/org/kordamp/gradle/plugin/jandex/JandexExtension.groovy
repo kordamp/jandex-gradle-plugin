@@ -30,12 +30,4 @@ interface JandexExtension {
 
     Property<Integer> getIndexVersion()
 
-    /**
-     * Additional task names or patterns that should depend on the jandex task.
-     * The plugin already sets up dependencies for 'compileTestJava', 'jar', and Javadoc tasks.
-     * This property allows adding more tasks that should depend on the jandex task.
-     * You can specify exact task names or patterns using Ant-style patterns (e.g., '*Test').
-     * @return a list of task names or patterns
-     */
-    ListProperty<String> getAdditionalDependentTasks()
 }

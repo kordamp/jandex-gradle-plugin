@@ -119,41 +119,5 @@ class JandexPlugin implements Plugin<Project> {
             }
         })
 
-        // Process additional dependent tasks configured by the user
-        // Use afterEvaluate to ensure the extension has been configured
-        project.afterEvaluate {
-            jandexExtension.additionalDependentTasks.get().each { String taskNameOrPattern ->
-                // Handle exact task name match
-                if (project.tasks.findByName(taskNameOrPattern)) {
-                    project.tasks.named(taskNameOrPattern).configure(new Action<Task>() {
-                        @Override
-                        @CompileDynamic
-                        void execute(Task t) {
-                            if (jandex.get().resolvedIncludeInJar.get()) {
-                                t.dependsOn(jandex)
-                            }
-                        }
-                    })
-                } 
-                // Handle pattern matching (convert Ant-style pattern to regex)
-                else {
-                    String regex = taskNameOrPattern
-                        .replace(".", "\\.")
-                        .replace("*", ".*")
-
-                    project.tasks.matching { Task task -> 
-                        task.name ==~ regex
-                    }.configureEach(new Action<Task>() {
-                        @Override
-                        @CompileDynamic
-                        void execute(Task t) {
-                            if (jandex.get().resolvedIncludeInJar.get()) {
-                                t.dependsOn(jandex)
-                            }
-                        }
-                    })
-                }
-            }
-        }
     }
 }

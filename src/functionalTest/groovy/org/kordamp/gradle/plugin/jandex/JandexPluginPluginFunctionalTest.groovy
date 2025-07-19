@@ -46,7 +46,7 @@ class JandexPluginPluginFunctionalTest  {
         projectDir.mkdirs()
 
         def indexFile = new File(projectDir, 'build/resources/main/META-INF/jandex.idx')
-        Assertions.assertThat(indexFile).doesNotExist();
+        Assertions.assertThat(indexFile).doesNotExist()
 
         settingsFile.text = ""
         buildFile.text = """
@@ -70,15 +70,15 @@ public class AClass {
 """
         def runner1 = createRunner()
         def result1 = runner1.build()
-        Assertions.assertThat(result1.task(':jandex').outcome).isEqualTo(TaskOutcome.SUCCESS);
-        Assertions.assertThat(indexFile).exists();
+        Assertions.assertThat(result1.task(':jandex').outcome).isEqualTo(TaskOutcome.SUCCESS)
+        Assertions.assertThat(indexFile).exists()
         def content1 = indexFile.getText("UTF-8")
-        Assertions.assertThat(content1).contains("sayHi");
+        Assertions.assertThat(content1).contains("sayHi")
 
         //Re run without any changes, to be sure the task is up-to-date:
         def runner2 = createRunner()
         def result2 = runner2.build()
-        Assertions.assertThat(result2.task(':jandex').outcome).isEqualTo(TaskOutcome.UP_TO_DATE);
+        Assertions.assertThat(result2.task(':jandex').outcome).isEqualTo(TaskOutcome.UP_TO_DATE)
 
         //Modify source file, and verify jandex was executed again:
         sourceFileAClass.text = """
@@ -92,17 +92,17 @@ public class AClass {
 """
         def runner3 = createRunner()
         def result3 = runner3.build()
-        Assertions.assertThat(result3.task(':jandex').outcome).isEqualTo(TaskOutcome.SUCCESS);
-        Assertions.assertThat(indexFile).exists();
+        Assertions.assertThat(result3.task(':jandex').outcome).isEqualTo(TaskOutcome.SUCCESS)
+        Assertions.assertThat(indexFile).exists()
         def content3 = indexFile.getText("UTF-8")
         Assertions.assertThat(content3)
             .isNotEqualTo(content1)
-            .contains("sayHello");
+            .contains("sayHello")
 
         //Re run without any changes, to be sure the task is up-to-date:
         def runner4 = createRunner()
         def result4 = runner4.build()
-        Assertions.assertThat(result4.task(':jandex').outcome).isEqualTo(TaskOutcome.UP_TO_DATE);
+        Assertions.assertThat(result4.task(':jandex').outcome).isEqualTo(TaskOutcome.UP_TO_DATE)
     }
 
     @Test
@@ -111,7 +111,7 @@ public class AClass {
         projectDir.mkdirs()
 
         def indexFile = new File(projectDir, 'build/resources/main/META-INF/jandex.idx')
-        Assertions.assertThat(indexFile).doesNotExist();
+        Assertions.assertThat(indexFile).doesNotExist()
 
         settingsFile.text = ""
         buildFile.text = """
@@ -139,7 +139,7 @@ public class AClass {
 """
         def runner1 = createRunner()
         def result1 = runner1.build()
-        Assertions.assertThat(result1.task(':jandex').outcome).isEqualTo(TaskOutcome.SUCCESS);
+        Assertions.assertThat(result1.task(':jandex').outcome).isEqualTo(TaskOutcome.SUCCESS)
         Assertions.assertThat(indexFile).exists()
         Assertions.assertThat(new IndexReader(indexFile.newInputStream()).indexVersion).isEqualTo(2)
         def content1 = indexFile.getText("UTF-8")
@@ -148,7 +148,7 @@ public class AClass {
         //Re run without any changes, to be sure the task is up-to-date:
         def runner2 = createRunner()
         def result2 = runner2.build()
-        Assertions.assertThat(result2.task(':jandex').outcome).isEqualTo(TaskOutcome.UP_TO_DATE);
+        Assertions.assertThat(result2.task(':jandex').outcome).isEqualTo(TaskOutcome.UP_TO_DATE)
 
         //Modify index version, and verify jandex was executed again:
         buildFile.text = """
@@ -166,7 +166,7 @@ jandex {
 """
         def runner3 = createRunner()
         def result3 = runner3.build()
-        Assertions.assertThat(result3.task(':jandex').outcome).isEqualTo(TaskOutcome.SUCCESS);
+        Assertions.assertThat(result3.task(':jandex').outcome).isEqualTo(TaskOutcome.SUCCESS)
         Assertions.assertThat(indexFile).exists()
         Assertions.assertThat(new IndexReader(indexFile.newInputStream()).indexVersion).isEqualTo(9)
         def content3 = indexFile.getText("UTF-8")
@@ -214,7 +214,7 @@ public class AClass {
 }
 """
         def result = createRunner().buildAndFail()
-        Assertions.assertThat(result .task(':jandex').outcome).isEqualTo(TaskOutcome.FAILED);
+        Assertions.assertThat(result .task(':jandex').outcome).isEqualTo(TaskOutcome.FAILED)
         Assertions.assertThat(result .output)
                 .contains("org.jboss.jandex.UnsupportedVersion")
                 .contains("Can't write index version 1000; this IndexWriter only supports index versions")
@@ -245,7 +245,7 @@ public class AClass {
         projectDir.mkdirs()
 
         def indexFile = new File(projectDir, 'build/resources/main/META-INF/jandex.idx')
-        Assertions.assertThat(indexFile).doesNotExist();
+        Assertions.assertThat(indexFile).doesNotExist()
 
         settingsFile.text = ""
         buildFile.text = """
@@ -272,21 +272,21 @@ public class AClass {
         def result1 = runner1.build()
         
         // Check if the task ran successfully
-        Assertions.assertThat(result1.task(':jandex')).isNotNull();
-        Assertions.assertThat(result1.task(':jandex').outcome).isEqualTo(TaskOutcome.SUCCESS);
+        Assertions.assertThat(result1.task(':jandex')).isNotNull()
+        Assertions.assertThat(result1.task(':jandex').outcome).isEqualTo(TaskOutcome.SUCCESS)
         
         // Check if the index file was created
-        Assertions.assertThat(indexFile.exists()).isTrue();
+        Assertions.assertThat(indexFile.exists()).isTrue()
         
         // Check if the configuration cache was used
-        Assertions.assertThat(result1.output.contains("Configuration cache entry stored")).isTrue();
+        Assertions.assertThat(result1.output.contains("Configuration cache entry stored")).isTrue()
         
         // Second run - configuration cache should be reused
         def runner2 = createRunnerWithConfigurationCache()
         def result2 = runner2.build()
         
         // Check if the configuration cache was reused
-        Assertions.assertThat(result2.output.contains("Configuration cache entry reused")).isTrue();
+        Assertions.assertThat(result2.output.contains("Configuration cache entry reused")).isTrue()
     }
 
     @Test
@@ -339,86 +339,4 @@ public class AClass {
         Assertions.assertThat(jandexIndex).isLessThan(javadocIndex)
     }
 
-    @Test
-    void testAdditionalDependentTasks() {
-        projectDir = new File("build/functionalTestFixture/additionalDependentTasks_${System.currentTimeMillis()}")
-        projectDir.mkdirs()
-
-        settingsFile.text = ""
-        buildFile.text = """
-plugins {
-    id 'org.kordamp.gradle.jandex'
-}
-
-repositories {
-    mavenCentral()
-}
-
-// Define a custom task
-task customTask {
-    doLast {
-        println "Custom task executed"
-    }
-}
-
-// Configure additional dependent tasks
-jandex {
-    additionalDependentTasks = ['customTask', '*Test']
-}
-"""
-
-        sourceFileAClass.text = """
-package com.sample;
-
-public class AClass {
-    public void sayHi() {
-        System.out.println("hi");
-    }
-}
-"""
-        // Run customTask with dry-run to check task dependencies
-        def runner = GradleRunner.create()
-        runner.forwardOutput()
-        runner.withPluginClasspath()
-        runner.withArguments("customTask", "--dry-run")
-        runner.withProjectDir(projectDir)
-
-        def result = runner.build()
-
-        // Check that the output contains both customTask and jandex tasks
-        Assertions.assertThat(result.output).contains(":customTask")
-        Assertions.assertThat(result.output).contains(":jandex")
-
-        // Verify the order - jandex should come before customTask in the execution plan
-        int jandexIndex = result.output.indexOf(":jandex")
-        int customTaskIndex = result.output.indexOf(":customTask")
-        Assertions.assertThat(jandexIndex).isLessThan(customTaskIndex)
-
-        // Create a test task to verify pattern matching
-        buildFile.text += """
-task someTest {
-    doLast {
-        println "Test task executed"
-    }
-}
-"""
-
-        // Run someTest with dry-run to check task dependencies
-        def runner2 = GradleRunner.create()
-        runner2.forwardOutput()
-        runner2.withPluginClasspath()
-        runner2.withArguments("someTest", "--dry-run")
-        runner2.withProjectDir(projectDir)
-
-        def result2 = runner2.build()
-
-        // Check that the output contains both someTest and jandex tasks
-        Assertions.assertThat(result2.output).contains(":someTest")
-        Assertions.assertThat(result2.output).contains(":jandex")
-
-        // Verify the order - jandex should come before someTest in the execution plan
-        int jandexIndex2 = result2.output.indexOf(":jandex")
-        int someTestIndex = result2.output.indexOf(":someTest")
-        Assertions.assertThat(jandexIndex2).isLessThan(someTestIndex)
-    }
 }
