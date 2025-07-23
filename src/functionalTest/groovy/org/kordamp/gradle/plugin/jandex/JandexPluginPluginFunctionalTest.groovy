@@ -289,54 +289,6 @@ public class AClass {
         Assertions.assertThat(result2.output.contains("Configuration cache entry reused")).isTrue()
     }
 
-    @Test
-    void testJavadocDependsOnJandex() {
-        projectDir = new File("build/functionalTestFixture/javadocDependency_${System.currentTimeMillis()}")
-        projectDir.mkdirs()
 
-        settingsFile.text = ""
-        buildFile.text = """
-plugins {
-    id 'org.kordamp.gradle.jandex'
-}
-
-repositories {
-    mavenCentral()
-}
-"""
-
-        sourceFileAClass.text = """
-package com.sample;
-
-/**
- * Sample class for javadoc generation
- */
-public class AClass {
-    /**
-     * Says hi
-     */
-    public void sayHi() {
-        System.out.println("hi");
-    }
-}
-"""
-        // Run javadoc task with dry-run to check task dependencies
-        def runner = GradleRunner.create()
-        runner.forwardOutput()
-        runner.withPluginClasspath()
-        runner.withArguments("javadoc", "--dry-run")
-        runner.withProjectDir(projectDir)
-
-        def result = runner.build()
-
-        // Check that the output contains both javadoc and jandex tasks
-        Assertions.assertThat(result.output).contains(":javadoc")
-        Assertions.assertThat(result.output).contains(":jandex")
-
-        // Verify the order - jandex should come before javadoc in the execution plan
-        int jandexIndex = result.output.indexOf(":jandex")
-        int javadocIndex = result.output.indexOf(":javadoc")
-        Assertions.assertThat(jandexIndex).isLessThan(javadocIndex)
-    }
 
 }

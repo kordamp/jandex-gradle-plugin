@@ -108,16 +108,6 @@ class JandexPlugin implements Plugin<Project> {
             }
         })
 
-        // Add dependency from javadoc task to jandex task to ensure proper task ordering
-        project.tasks.withType(Javadoc).configureEach(new Action<Javadoc>() {
-            @Override
-            @CompileDynamic
-            void execute(Javadoc t) {
-                if (jandex.get().resolvedIncludeInJar.get()) {
-                    t.dependsOn(jandex)
-                }
-            }
-        })
 
     }
 }
