@@ -157,12 +157,6 @@ class JandexTask extends DefaultTask {
         indexVersion.set(value)
     }
 
-    @Internal
-    Property<Boolean> getProcessDefaultFileSet() { processDefaultFileSet }
-
-    @Internal
-    Property<Boolean> getIncludeInJar() { includeInJar }
-
     @Input
     Provider<Boolean> getResolvedProcessDefaultFileSet() { 
         return processDefaultFileSet
