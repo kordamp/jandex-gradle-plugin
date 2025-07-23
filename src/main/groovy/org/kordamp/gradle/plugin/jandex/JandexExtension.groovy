@@ -18,7 +18,6 @@
 package org.kordamp.gradle.plugin.jandex
 
 import groovy.transform.CompileStatic
-import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 
 /**

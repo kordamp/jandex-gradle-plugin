@@ -19,7 +19,6 @@ package org.kordamp.gradle.plugin.jandex.internal
 
 import groovy.transform.CompileStatic
 import org.gradle.api.model.ObjectFactory
-import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.kordamp.gradle.plugin.jandex.JandexExtension
 
@@ -32,12 +31,10 @@ import javax.inject.Inject
 class JandexExtensionImpl implements JandexExtension {
     final Property<String> version
     final Property<Integer> indexVersion
-    final ListProperty<String> additionalDependentTasks
 
     @Inject
     JandexExtensionImpl(ObjectFactory objects) {
         version = objects.property(String).convention(DefaultVersions.INSTANCE.jandexVersion)
         indexVersion = objects.property(Integer).unset()
-        additionalDependentTasks = objects.listProperty(String).convention([])
     }
 }
