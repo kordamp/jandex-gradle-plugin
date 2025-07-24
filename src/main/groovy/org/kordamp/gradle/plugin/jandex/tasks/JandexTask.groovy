@@ -158,12 +158,12 @@ class JandexTask extends DefaultTask {
     }
 
     @Input
-    Provider<Boolean> getResolvedProcessDefaultFileSet() { 
+    Provider<Boolean> getProcessDefaultFileSet() {
         return processDefaultFileSet
     }
 
     @Input
-    Provider<Boolean> getResolvedIncludeInJar() { 
+    Provider<Boolean> getIncludeInJar() {
         return includeInJar
     }
 
@@ -197,7 +197,7 @@ class JandexTask extends DefaultTask {
     private List<String> resolveSources() {
         List<String> files = []
 
-        if (resolvedProcessDefaultFileSet.get()) {
+        if (processDefaultFileSet.get()) {
             files.addAll((Collection<String>) mainClassesDirs.files*.absolutePath.flatten())
         }
 

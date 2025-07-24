@@ -74,7 +74,7 @@ class JandexPlugin implements Plugin<Project> {
                     t.processResourcesDir.set(project.layout.dir(project.tasks.named('processResources', Copy).map { it.destinationDir }))
                     t.layout.set(project.layout)
                     SourceSetContainer sourceSets = project.extensions.findByType(SourceSetContainer)
-                    if (t.resolvedProcessDefaultFileSet.get() && sourceSets != null) {
+                    if (t.processDefaultFileSet.get() && sourceSets != null) {
                         t.mainClassesDirs.from(sourceSets.findByName('main').output.classesDirs)
                     }
                     t.indexVersion.set(jandexExtension.indexVersion.getOrNull())
@@ -92,7 +92,7 @@ class JandexPlugin implements Plugin<Project> {
             @Override
             @CompileDynamic
             void execute(JavaCompile t) {
-                if (jandex.get().resolvedIncludeInJar.get()) {
+                if (jandex.get().includeInJar.get()) {
                     t.dependsOn(jandex)
                 }
             }
@@ -102,12 +102,10 @@ class JandexPlugin implements Plugin<Project> {
             @Override
             @CompileDynamic
             void execute(Jar t) {
-                if (jandex.get().resolvedIncludeInJar.get()) {
+                if (jandex.get().includeInJar.get()) {
                     t.dependsOn(jandex)
                 }
             }
         })
-
-
     }
 }
