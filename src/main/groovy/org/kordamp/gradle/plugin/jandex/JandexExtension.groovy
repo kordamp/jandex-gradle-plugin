@@ -1,7 +1,7 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
  *
- * Copyright 2019-2024 Andres Almiray.
+ * Copyright 2019-2025 Andres Almiray.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,4 +28,5 @@ interface JandexExtension {
     Property<String> getVersion()
 
     Property<Integer> getIndexVersion()
+
 }

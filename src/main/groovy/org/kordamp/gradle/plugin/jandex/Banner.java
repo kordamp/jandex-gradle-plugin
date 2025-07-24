@@ -1,7 +1,7 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
  *
- * Copyright 2019-2024 Andres Almiray.
+ * Copyright 2019-2025 Andres Almiray.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public abstract class Banner implements BuildService<Banner.Params> {
     private static final String ORG_KORDAMP_BANNER = "org.kordamp.banner";
+    private static final String ORG_KORDAMP_BANNER_FILE_OPS = "org.kordamp.banner.fileops";
+    private static final String GRADLE_CONFIGURATION_CACHE = "org.gradle.configuration-cache";
 
     private String productVersion;
     private String productId;
@@ -61,22 +63,48 @@ public abstract class Banner implements BuildService<Banner.Params> {
 
         boolean printBanner = null == System.getProperty(ORG_KORDAMP_BANNER) || Boolean.getBoolean(ORG_KORDAMP_BANNER);
 
-        File parent = new File(project.getGradle().getGradleUserHomeDir(), "caches");
-        File markerFile = getMarkerFile(parent);
-        if (!markerFile.exists()) {
-            if (printBanner) System.err.println(banner);
-            markerFile.getParentFile().mkdirs();
-            writeQuietly(markerFile, "1");
+        // Check if configuration cache is enabled
+        // Gradle sets this property when configuration cache is enabled via --configuration-cache
+        boolean configCacheEnabled = System.getProperty(GRADLE_CONFIGURATION_CACHE) != null ||
+                                      "true".equals(System.getProperty("gradle.configuration-cache.internal"));
+
+        // Check if file operations are enabled:
+        // 1. If the manual flag is set, respect it
+        // 2. If configuration cache is enabled, disable file operations
+        // 3. Otherwise, enable file operations
+        boolean manualFlagSet = System.getProperty(ORG_KORDAMP_BANNER_FILE_OPS) != null;
+        boolean enableFileOps;
+
+        if (manualFlagSet) {
+            // If manual flag is set, respect it
+            enableFileOps = Boolean.getBoolean(ORG_KORDAMP_BANNER_FILE_OPS);
         } else {
-            try {
-                int count = Integer.parseInt(readQuietly(markerFile));
-                if (count < 3) {
-                    if (printBanner) System.err.println(banner);
-                }
-                writeQuietly(markerFile, (count + 1) + "");
-            } catch (NumberFormatException e) {
+            // If configuration cache is enabled, disable file operations
+            enableFileOps = !configCacheEnabled;
+        }
+
+        if (!enableFileOps) {
+            // When file operations are disabled (e.g., when using configuration cache), just print the banner
+            if (printBanner) System.err.println(banner);
+        } else {
+            // When file operations are enabled, use the marker file logic
+            File parent = new File(project.getGradle().getGradleUserHomeDir(), "caches");
+            File markerFile = getMarkerFile(parent);
+            if (!markerFile.exists()) {
                 if (printBanner) System.err.println(banner);
+                markerFile.getParentFile().mkdirs();
                 writeQuietly(markerFile, "1");
+            } else {
+                try {
+                    int count = Integer.parseInt(readQuietly(markerFile));
+                    if (count < 3) {
+                        if (printBanner) System.err.println(banner);
+                    }
+                    writeQuietly(markerFile, (count + 1) + "");
+                } catch (NumberFormatException e) {
+                    if (printBanner) System.err.println(banner);
+                    writeQuietly(markerFile, "1");
+                }
             }
         }
     }

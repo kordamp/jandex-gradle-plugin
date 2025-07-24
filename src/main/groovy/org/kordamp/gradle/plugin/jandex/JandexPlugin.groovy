@@ -1,7 +1,7 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
  *
- * Copyright 2019-2024 Andres Almiray.
+ * Copyright 2019-2025 Andres Almiray.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.api.tasks.javadoc.Javadoc
 import org.kordamp.gradle.plugin.jandex.internal.JandexExtensionImpl
 import org.kordamp.gradle.plugin.jandex.tasks.JandexTask
 
@@ -69,14 +70,14 @@ class JandexPlugin implements Plugin<Project> {
                     t.dependsOn(project.tasks.named('classes'))
                     t.group = BasePlugin.BUILD_GROUP
                     t.description = 'Generate a jandex index'
-                    t.classpath = jandexConfiguration
-                    t.processResourcesTask = project.tasks.named('processResources', Copy)
+                    t.classpathFiles.from(jandexConfiguration)
+                    t.processResourcesDir.set(project.layout.dir(project.tasks.named('processResources', Copy).map { it.destinationDir }))
                     t.layout.set(project.layout)
-                    t.sourceSets.addAll(project.extensions.findByType(SourceSetContainer))
-                    if (t.resolvedProcessDefaultFileSet.get()) {
-                        t.inputs.files(t.sourceSets.findByName('main').output.classesDirs*.absolutePath.flatten())
+                    SourceSetContainer sourceSets = project.extensions.findByType(SourceSetContainer)
+                    if (t.resolvedProcessDefaultFileSet.get() && sourceSets != null) {
+                        t.mainClassesDirs.from(sourceSets.findByName('main').output.classesDirs)
                     }
-                    t.indexVersion = jandexExtension.indexVersion.getOrNull()
+                    t.indexVersion.set(jandexExtension.indexVersion.getOrNull())
                 }
             })
 
@@ -106,5 +107,7 @@ class JandexPlugin implements Plugin<Project> {
                 }
             }
         })
+
+
     }
 }

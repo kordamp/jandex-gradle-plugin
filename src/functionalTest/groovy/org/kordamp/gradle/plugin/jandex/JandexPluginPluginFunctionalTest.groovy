@@ -1,7 +1,7 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
  *
- * Copyright 2019-2024 Andres Almiray.
+ * Copyright 2019-2025 Andres Almiray.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ class JandexPluginPluginFunctionalTest  {
         projectDir.mkdirs()
 
         def indexFile = new File(projectDir, 'build/resources/main/META-INF/jandex.idx')
-        Assertions.assertThat(indexFile).doesNotExist();
+        Assertions.assertThat(indexFile).doesNotExist()
 
         settingsFile.text = ""
         buildFile.text = """
@@ -70,15 +70,15 @@ public class AClass {
 """
         def runner1 = createRunner()
         def result1 = runner1.build()
-        Assertions.assertThat(result1.task(':jandex').outcome).isEqualTo(TaskOutcome.SUCCESS);
-        Assertions.assertThat(indexFile).exists();
+        Assertions.assertThat(result1.task(':jandex').outcome).isEqualTo(TaskOutcome.SUCCESS)
+        Assertions.assertThat(indexFile).exists()
         def content1 = indexFile.getText("UTF-8")
-        Assertions.assertThat(content1).contains("sayHi");
+        Assertions.assertThat(content1).contains("sayHi")
 
         //Re run without any changes, to be sure the task is up-to-date:
         def runner2 = createRunner()
         def result2 = runner2.build()
-        Assertions.assertThat(result2.task(':jandex').outcome).isEqualTo(TaskOutcome.UP_TO_DATE);
+        Assertions.assertThat(result2.task(':jandex').outcome).isEqualTo(TaskOutcome.UP_TO_DATE)
 
         //Modify source file, and verify jandex was executed again:
         sourceFileAClass.text = """
@@ -92,17 +92,17 @@ public class AClass {
 """
         def runner3 = createRunner()
         def result3 = runner3.build()
-        Assertions.assertThat(result3.task(':jandex').outcome).isEqualTo(TaskOutcome.SUCCESS);
-        Assertions.assertThat(indexFile).exists();
+        Assertions.assertThat(result3.task(':jandex').outcome).isEqualTo(TaskOutcome.SUCCESS)
+        Assertions.assertThat(indexFile).exists()
         def content3 = indexFile.getText("UTF-8")
         Assertions.assertThat(content3)
             .isNotEqualTo(content1)
-            .contains("sayHello");
+            .contains("sayHello")
 
         //Re run without any changes, to be sure the task is up-to-date:
         def runner4 = createRunner()
         def result4 = runner4.build()
-        Assertions.assertThat(result4.task(':jandex').outcome).isEqualTo(TaskOutcome.UP_TO_DATE);
+        Assertions.assertThat(result4.task(':jandex').outcome).isEqualTo(TaskOutcome.UP_TO_DATE)
     }
 
     @Test
@@ -111,7 +111,7 @@ public class AClass {
         projectDir.mkdirs()
 
         def indexFile = new File(projectDir, 'build/resources/main/META-INF/jandex.idx')
-        Assertions.assertThat(indexFile).doesNotExist();
+        Assertions.assertThat(indexFile).doesNotExist()
 
         settingsFile.text = ""
         buildFile.text = """
@@ -139,7 +139,7 @@ public class AClass {
 """
         def runner1 = createRunner()
         def result1 = runner1.build()
-        Assertions.assertThat(result1.task(':jandex').outcome).isEqualTo(TaskOutcome.SUCCESS);
+        Assertions.assertThat(result1.task(':jandex').outcome).isEqualTo(TaskOutcome.SUCCESS)
         Assertions.assertThat(indexFile).exists()
         Assertions.assertThat(new IndexReader(indexFile.newInputStream()).indexVersion).isEqualTo(2)
         def content1 = indexFile.getText("UTF-8")
@@ -148,7 +148,7 @@ public class AClass {
         //Re run without any changes, to be sure the task is up-to-date:
         def runner2 = createRunner()
         def result2 = runner2.build()
-        Assertions.assertThat(result2.task(':jandex').outcome).isEqualTo(TaskOutcome.UP_TO_DATE);
+        Assertions.assertThat(result2.task(':jandex').outcome).isEqualTo(TaskOutcome.UP_TO_DATE)
 
         //Modify index version, and verify jandex was executed again:
         buildFile.text = """
@@ -166,7 +166,7 @@ jandex {
 """
         def runner3 = createRunner()
         def result3 = runner3.build()
-        Assertions.assertThat(result3.task(':jandex').outcome).isEqualTo(TaskOutcome.SUCCESS);
+        Assertions.assertThat(result3.task(':jandex').outcome).isEqualTo(TaskOutcome.SUCCESS)
         Assertions.assertThat(indexFile).exists()
         Assertions.assertThat(new IndexReader(indexFile.newInputStream()).indexVersion).isEqualTo(9)
         def content3 = indexFile.getText("UTF-8")
@@ -214,7 +214,7 @@ public class AClass {
 }
 """
         def result = createRunner().buildAndFail()
-        Assertions.assertThat(result .task(':jandex').outcome).isEqualTo(TaskOutcome.FAILED);
+        Assertions.assertThat(result .task(':jandex').outcome).isEqualTo(TaskOutcome.FAILED)
         Assertions.assertThat(result .output)
                 .contains("org.jboss.jandex.UnsupportedVersion")
                 .contains("Can't write index version 1000; this IndexWriter only supports index versions")
@@ -228,4 +228,67 @@ public class AClass {
         runner.withProjectDir(projectDir)
         return runner
     }
+
+    def createRunnerWithConfigurationCache() {
+        def runner = GradleRunner.create()
+        runner.forwardOutput()
+        runner.withPluginClasspath()
+        // Add system property to disable file operations in Banner class
+        runner.withArguments("jandex", "--stacktrace", "--configuration-cache", "-Dorg.kordamp.banner.fileops=false")
+        runner.withProjectDir(projectDir)
+        return runner
+    }
+
+    @Test
+    void testWithConfigurationCache() {
+        projectDir = new File("build/functionalTestFixture/configCache_${System.currentTimeMillis()}")
+        projectDir.mkdirs()
+
+        def indexFile = new File(projectDir, 'build/resources/main/META-INF/jandex.idx')
+        Assertions.assertThat(indexFile).doesNotExist()
+
+        settingsFile.text = ""
+        buildFile.text = """
+plugins {
+    id 'org.kordamp.gradle.jandex'
+}
+
+repositories {
+    mavenCentral()
+}
+"""
+
+        sourceFileAClass.text = """
+package com.sample;
+
+public class AClass {
+	public void sayHi() {
+		System.out.println("hi");
+	}
+}
+"""
+        // First run - configuration cache will be stored
+        def runner1 = createRunnerWithConfigurationCache()
+        def result1 = runner1.build()
+        
+        // Check if the task ran successfully
+        Assertions.assertThat(result1.task(':jandex')).isNotNull()
+        Assertions.assertThat(result1.task(':jandex').outcome).isEqualTo(TaskOutcome.SUCCESS)
+        
+        // Check if the index file was created
+        Assertions.assertThat(indexFile.exists()).isTrue()
+        
+        // Check if the configuration cache was used
+        Assertions.assertThat(result1.output.contains("Configuration cache entry stored")).isTrue()
+        
+        // Second run - configuration cache should be reused
+        def runner2 = createRunnerWithConfigurationCache()
+        def result2 = runner2.build()
+        
+        // Check if the configuration cache was reused
+        Assertions.assertThat(result2.output.contains("Configuration cache entry reused")).isTrue()
+    }
+
+
+
 }
