@@ -21,7 +21,6 @@ import groovy.transform.CompileStatic
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 import org.gradle.workers.WorkAction
-import org.jboss.jandex.ClassInfo
 import org.jboss.jandex.ClassSummary
 import org.jboss.jandex.Index
 import org.jboss.jandex.IndexWriter
@@ -64,6 +63,8 @@ abstract class JandexWorkAction implements WorkAction<JandexWorkParameters> {
         FileOutputStream output = new FileOutputStream(destination)
         Integer indexVersion = parameters.indexVersion.getOrNull()
 
+        classFileVisitor.indexFiles()
+
         try {
             destination.parentFile.mkdirs()
             IndexWriter writer = new IndexWriter(output)
@@ -80,6 +81,12 @@ abstract class JandexWorkAction implements WorkAction<JandexWorkParameters> {
     }
 
     private class ClassFileVisitor extends SimpleFileVisitor<Path> {
+        // Collect .class files in a cross-platform deterministic sorted order.
+        // This is required to generate reproducible Jandex indexes (Jandex >= 3.5.0).
+        // Using a URI as the sort-key prevents different orders for varying file separators
+        // ('/' vs '\').
+        private final Map<URI, File> classFiles = new TreeMap<>()
+
         private final Indexer indexer
 
         ClassFileVisitor(Indexer indexer) {
@@ -88,7 +95,10 @@ abstract class JandexWorkAction implements WorkAction<JandexWorkParameters> {
 
         @Override
         FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-            indexFile(file.toFile())
+            URI uri = file.toUri()
+            if (uri.getPath().endsWith(".class")) {
+                classFiles.put(uri, file.toFile())
+            }
             return FileVisitResult.CONTINUE
         }
 
@@ -97,7 +107,11 @@ abstract class JandexWorkAction implements WorkAction<JandexWorkParameters> {
             throw e
         }
 
-        private void indexFile(File file) throws IOException {
+        void indexFiles() {
+            classFiles.values().forEach { indexFile(indexer, it) }
+        }
+
+        private void indexFile(Indexer indexer, File file) throws IOException {
             if (file.name.endsWith('.class')) {
                 FileInputStream fis = new FileInputStream(file)
                 try {
