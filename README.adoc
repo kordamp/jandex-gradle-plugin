@@ -93,11 +93,18 @@ Simply add the desired version (for the maven coordinates `io.smallrye:jandex:<v
 [source,groovy]
 ----
 jandex {
-    version = '3.0.0'
+    version = '3.5.0'
 }
 ----
 
 WARNING: This plugin supports Jandex 3 as a minimum since version `1.0.0`.
+
+=== Reproducible Jandex indexes
+
+To generate reproducible Jandex indexes, serialized index representations are equal across all builds,
+Jandex version 3.5.0 or newer is required.
+
+To enable reproducible jar files in Gradle, visit the `link:https://docs.gradle.org/current/userguide/working_with_files.html#sec:reproducible_archives[Gradle docs]`.
 
 == Migration
 
